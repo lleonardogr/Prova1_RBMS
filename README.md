@@ -92,3 +92,7 @@ erDiagram
     string magazine_month_year
   }
 ```
+---
+BÔNUS (2,0 pts) — Modelo Entidade-Relacionamento (MER)
+
+Objetivo: Para cada exercício, elabore um diagrama ER completo, identificando entidades, atributos, relacionamentos, cardinalidades (1:1, 1:N, N:M) e participação (total/parcial). Quando apropriado, identifique atributos-chave, atributos multivalorados/derivados, entidades fracas e entidades-associação.
