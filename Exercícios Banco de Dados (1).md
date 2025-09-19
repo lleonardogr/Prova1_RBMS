@@ -441,7 +441,7 @@ erDiagram
   MAGAZINE_ISSUE {
     int issue_id PK
     string issue_code
-    string magazine_month_year
+    date magazine_month_year
   }
 
   POST {
