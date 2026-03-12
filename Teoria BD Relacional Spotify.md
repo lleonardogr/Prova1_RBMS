@@ -1,208 +1,181 @@
-# Banco de Dados Relacionais — Teoria Formal Completa
+# Banco de Dados Relacionais — Teoria e Prática
 ### Contexto: Plataforma de Streaming Musical (Spotify)
 
-> Cada tópico apresenta primeiro a **definição formal matemática**, depois a **intuição** e, por fim, a **aplicação direta** nas tabelas do modelo Spotify desenvolvido em aula.
+> **Como usar este material:**  
+> Cada tópico segue sempre a mesma estrutura:  
+> 🔷 **Definição Formal** → 💡 **Intuição** → 🎵 **Aplicação no Spotify**  
+> Os exemplos de código têm comentários inline que explicam cada linha.
 
 ---
 
 ## Sumário
 
 1. [Modelo Relacional](#1-modelo-relacional)
-2. [Chaves: Candidata, Super, Primária, Alternada e Estrangeira](#2-chaves)
+2. [Chaves](#2-chaves)
 3. [Dependência Funcional](#3-dependência-funcional)
 4. [Fechamento de Atributos](#4-fechamento-de-atributos)
 5. [Equivalência de Dependências Funcionais](#5-equivalência-de-dependências-funcionais)
 6. [Cobertura Canônica](#6-cobertura-canônica)
 7. [Anomalias no Modelo Relacional](#7-anomalias-no-modelo-relacional)
-8. [Mapeamento do Modelo ER para o Relacional](#8-mapeamento-do-modelo-er-para-o-relacional)
-9. [Estratégias para Design de Esquema e Normalização](#9-estratégias-para-design-de-esquema-e-normalização)
+8. [Mapeamento ER → Relacional](#8-mapeamento-er--relacional)
+9. [Estratégias de Design e Normalização](#9-estratégias-de-design-e-normalização)
 10. [Integração de Esquemas](#10-integração-de-esquemas)
 
 ---
 
 ## 1. Modelo Relacional
 
-### 1.1 Fundamento Matemático
+### 🔷 Definição Formal
 
-O modelo relacional é fundamentado na **teoria dos conjuntos** e na **lógica de predicados de primeira ordem**, proposto por E. F. Codd (1970) no artigo *"A Relational Model of Data for Large Shared Data Banks"*.
+O modelo relacional é fundamentado na **teoria dos conjuntos** e na **lógica de predicados de primeira ordem** (Codd, 1970).
 
-#### Definição formal de Domínio
+> **Def. 1.1 — Domínio:** Um domínio `D` é um conjunto nomeado de valores atômicos (indivisíveis).  
+> Exemplos: `D_int = {1,2,3,...}`, `D_plano = {'gratuito','premium'}`, `D_texto = {strings}`
 
-> **Definição 1.1 — Domínio:**  
-> Um domínio `D` é um conjunto de valores atômicos (indivisíveis). Formalmente, é um conjunto nomeado de valores escalares.  
-> Exemplos: `D_inteiros = {1, 2, 3, ...}`, `D_plano = {'gratuito', 'premium'}`.
+> **Def. 1.2 — Esquema de Relação:** `R(A₁, A₂, ..., Aₙ)` — um nome `R` com lista de atributos, cada um associado a um domínio `dom(Aᵢ)`.
 
-#### Definição formal de Relação
+> **Def. 1.3 — Relação (instância):** Uma relação `r` sobre `R` é um **subconjunto finito** do produto cartesiano dos domínios:  
+> `r ⊆ dom(A₁) × dom(A₂) × ... × dom(Aₙ)`  
+> Cada elemento é uma **tupla** `t = (v₁, v₂, ..., vₙ)` onde `vᵢ ∈ dom(Aᵢ)`.
 
-> **Definição 1.2 — Esquema de Relação:**  
-> Um esquema de relação `R(A₁, A₂, ..., Aₙ)` é um nome `R` associado a uma lista de atributos `{A₁, ..., Aₙ}`, onde cada atributo `Aᵢ` é associado a um domínio `dom(Aᵢ)`.
+> **Def. 1.4 — Acesso a tupla:** `t[Aᵢ]` denota o valor da tupla `t` no atributo `Aᵢ`.  
+> Para um conjunto `X = {Aᵢ, Aⱼ}`, `t[X]` denota a subtupla `(t[Aᵢ], t[Aⱼ])`.
 
-> **Definição 1.3 — Relação (instância):**  
-> Uma relação (ou instância) `r` sobre o esquema `R(A₁, ..., Aₙ)` é um subconjunto finito do produto cartesiano dos domínios:
->
-> `r ⊆ dom(A₁) × dom(A₂) × ... × dom(Aₙ)`
->
-> Cada elemento de `r` é uma **tupla** `t = (v₁, v₂, ..., vₙ)` onde `vᵢ ∈ dom(Aᵢ)`.
+**Propriedades obrigatórias de uma relação válida:**
 
-> **Definição 1.4 — Tupla e notação de acesso:**  
-> Para uma tupla `t` e atributo `Aᵢ`, a notação `t[Aᵢ]` ou `t.Aᵢ` denota o valor de `t` no atributo `Aᵢ`.  
-> Para um conjunto de atributos `X = {Aᵢ, Aⱼ}`, `t[X]` denota a subtupla `(t[Aᵢ], t[Aⱼ])`.
+| Propriedade | Formalização | O que significa na prática |
+|---|---|---|
+| **Atomicidade (1FN)** | `∀ t ∈ r, ∀ Aᵢ : t[Aᵢ] ∈ dom(Aᵢ)` | Nenhuma célula contém lista ou conjunto |
+| **Unicidade de tuplas** | `∀ t₁, t₂ ∈ r : t₁ ≠ t₂` | `r` é conjunto — sem linhas duplicadas |
+| **Ordem irrelevante** | `r` é conjunto, sem posição | Não existe "linha número 3" formalmente |
+| **Atributos nomeados** | Acesso por nome, não por posição | `t[titulo]`, não `t[2]` |
 
-#### Propriedades formais de uma relação
+> **Def. 1.5 — Grau e Cardinalidade:**  
+> **Grau** = número de atributos `n` no esquema.  
+> **Cardinalidade** = número de tuplas `|r|` na instância.
 
-Uma relação válida satisfaz **obrigatoriamente**:
+---
 
-| Propriedade | Formalização |
-|---|---|
-| **Atomicidade (1FN)** | `∀ t ∈ r, ∀ Aᵢ : t[Aᵢ] ∈ dom(Aᵢ)` — nenhum valor é conjunto ou lista |
-| **Unicidade de tuplas** | `∀ t₁, t₂ ∈ r : t₁ ≠ t₂` — `r` é um **conjunto**, não multiconjunto |
-| **Ordem irrelevante** | `r` como conjunto não tem ordenação entre tuplas |
-| **Atributos nomeados** | Acesso por nome, não por posição |
+### 💡 Intuição
 
-#### Grau, Cardinalidade e Esquema de Banco de Dados
+Pense numa planilha Excel onde:
+- Cada **aba** é uma relação
+- Cada **coluna** é um atributo com tipo fixo
+- Cada **linha** é uma tupla — e **não pode se repetir**
+- A **ordem das linhas não importa** matematicamente
 
-> **Definição 1.5 — Grau e Cardinalidade:**  
-> O **grau** de uma relação é o número de atributos `n` no esquema.  
-> A **cardinalidade** de uma instância é o número de tuplas `|r|`.
+A diferença crucial entre "tabela" (implementação física) e "relação" (conceito matemático): a relação é um **conjunto puro** — sem duplicatas, sem ordem — enquanto uma tabela pode ter ambas por razões de performance.
 
-> **Definição 1.6 — Esquema de Banco de Dados:**  
-> Um esquema de banco de dados relacional `S` é um conjunto de esquemas de relação:  
-> `S = {R₁, R₂, ..., Rₘ}`  
-> Uma **instância** de banco de dados `DB` é um conjunto `{r₁, r₂, ..., rₘ}` onde cada `rᵢ` é uma instância válida de `Rᵢ`.
+---
 
-### 1.2 Intuição e Analogia
-
-Matematicamente, uma relação é um **subconjunto do produto cartesiano** dos seus domínios. Na prática isso significa que cada linha da tabela é uma combinação possível de valores, e o banco garante que essa combinação satisfaz todas as restrições declaradas.
-
-A diferença fundamental entre uma **tabela** (implementação) e uma **relação** (conceito matemático) é que a relação é um **conjunto** — sem duplicatas, sem ordem — enquanto implementações físicas podem ter ambas por razões de desempenho.
-
-### 1.3 Aplicação no Spotify
+### 🎵 Aplicação no Spotify
 
 ```
 Esquema formal:
-  MUSICA(id_musica: D_int, titulo: D_varchar200, duracao_seg: D_int_pos, letra: D_text_null)
+  MUSICA(id_musica, titulo, duracao_seg, letra)
 
-  dom(id_musica)   = ℤ⁺  (inteiros positivos)
-  dom(titulo)      = {strings de até 200 caracteres}
-  dom(duracao_seg) = {n ∈ ℤ | n > 0}
-  dom(letra)       = {strings} ∪ {NULL}
+  dom(id_musica)   = ℤ⁺              ← inteiros positivos
+  dom(titulo)      = VARCHAR(200)     ← strings até 200 chars
+  dom(duracao_seg) = {n ∈ ℤ | n > 0} ← inteiro positivo obrigatório
+  dom(letra)       = TEXT ∪ {NULL}   ← aceita ausência de valor
 
-Grau de MUSICA    = 4
-Grau de REPRODUCAO = 6
+  Grau de MUSICA = 4   (4 atributos)
+```
 
-Instância r(MUSICA) — exemplo:
+```
+Instância r(MUSICA) — exemplo de 3 tuplas:
+
 ┌───────────┬─────────────────────────┬─────────────┬────────┐
 │ id_musica │ titulo                  │ duracao_seg │ letra  │
 ├───────────┼─────────────────────────┼─────────────┼────────┤
-│ 1         │ Bohemian Rhapsody       │ 354         │ ...    │
-│ 2         │ Blinding Lights         │ 200         │ ...    │
-│ 3         │ Shape of You            │ 234         │ NULL   │
+│ 1         │ Bohemian Rhapsody       │ 354         │ ...    │  ← tupla t₁
+│ 2         │ Blinding Lights         │ 200         │ ...    │  ← tupla t₂
+│ 3         │ Shape of You            │ 234         │ NULL   │  ← letra ausente: válido
 └───────────┴─────────────────────────┴─────────────┴────────┘
+
 Cardinalidade atual: |r(MUSICA)| = 3
 ```
 
-> **Violação de atomicidade — exemplo:**  
-> Se `generos` fosse armazenado como `"pop, rock, eletrônico"` dentro de MUSICA, isso violaria a 1FN pois `dom(generos)` conteria listas. A solução no Spotify foi criar `GENERO_MUSICA` como tabela separada.
+> ⚠️ **Violação de atomicidade — o caso dos gêneros:**  
+> Se `generos` fosse `"pop, rock, eletrônico"` dentro de MUSICA, violaria a 1FN pois `dom(generos)` conteria listas.  
+> **Solução no Spotify:** tabela separada `GENERO_MUSICA(id_genero, id_musica, nome)` — cada gênero em sua própria linha.
 
-### 1.4 Restrições de Integridade
+**Restrições de integridade disponíveis:**
 
-Além das propriedades estruturais, o modelo impõe **restrições de integridade**:
-
-| Restrição | Definição formal | Exemplo no Spotify |
+| Restrição | Definição | Exemplo no Spotify |
 |---|---|---|
-| **Domínio** | `t[Aᵢ] ∈ dom(Aᵢ)` | `plano ∈ {'gratuito','premium'}` |
-| **Chave** | Unicidade da PK (ver seção 2) | `id_musica` único em MUSICA |
-| **Integridade de entidade** | PK ≠ NULL | `id_musica IS NOT NULL` |
-| **Integridade referencial** | FK referencia PK existente (ver seção 2.5) | `REPRODUCAO.id_musica` deve existir em MUSICA |
-| **Semântica** | Restrições de negócio | `duracao_seg > 0`, `CHECK(tipo IN ('solo','banda'))` |
+| **Domínio** | `t[Aᵢ] ∈ dom(Aᵢ)` | `CHECK (plano IN ('gratuito','premium'))` |
+| **Entidade** | PK `≠ NULL` sempre | `id_musica NOT NULL` |
+| **Referencial** | FK aponta para PK existente | `REPRODUCAO.id_musica` deve existir em MUSICA |
+| **Semântica** | Regras de negócio | `CHECK (duracao_seg > 0)` |
 
 ---
 
 ## 2. Chaves
 
-### 2.1 Definições Formais
+### 🔷 Definição Formal
 
-> **Definição 2.1 — Superchave:**  
-> Seja `R(A₁, ..., Aₙ)` um esquema e `r` uma instância de `R`.  
-> Um subconjunto `SK ⊆ {A₁, ..., Aₙ}` é uma **superchave** de `R` se e somente se:
->
-> `∀ t₁, t₂ ∈ r : t₁ ≠ t₂ ⟹ t₁[SK] ≠ t₂[SK]`
->
-> Ou seja: não existem duas tuplas distintas com o mesmo valor em `SK`.
+> **Def. 2.1 — Superchave:** `SK ⊆ atributos(R)` é superchave se:  
+> `∀ t₁, t₂ ∈ r : t₁ ≠ t₂ ⟹ t₁[SK] ≠ t₂[SK]`  
+> Nenhuma superchave pode produzir valores iguais em duas tuplas distintas.
 
-> **Definição 2.2 — Chave Candidata:**  
-> Uma superchave `CK ⊆ {A₁, ..., Aₙ}` é uma **chave candidata** se e somente se:
->
-> `CK` é superchave  **E**  `∀ X ⊊ CK : X` **não** é superchave
->
-> Ou seja: é uma superchave **mínima** — remover qualquer atributo a invalida.
+> **Def. 2.2 — Chave Candidata:** Superchave **mínima** —  
+> `CK` é superchave **E** `∀ X ⊊ CK : X` não é superchave.  
+> Remover qualquer atributo destrói a propriedade de identificação única.
 
-> **Definição 2.3 — Chave Primária:**  
-> A **chave primária** `PK` é a chave candidata **escolhida** pelo designer.  
+> **Def. 2.3 — Chave Primária (PK):** Chave candidata **escolhida** pelo designer.  
 > Restrição adicional: `∀ t ∈ r : t[PK] ≠ NULL` (integridade de entidade).
 
-> **Definição 2.4 — Chave Alternada:**  
-> Toda chave candidata que **não** foi escolhida como primária.  
-> Deve ser implementada com `UNIQUE NOT NULL`.
+> **Def. 2.4 — Chave Alternada:** Toda chave candidata **não escolhida** como primária.  
+> Implementada com `UNIQUE NOT NULL`.
 
-> **Definição 2.5 — Chave Estrangeira:**  
-> Sejam `R₁` e `R₂` dois esquemas, `PK₂` a chave primária de `R₂`.  
-> Um subconjunto `FK ⊆ atributos(R₁)` é uma **chave estrangeira** de `R₁` referenciando `R₂` se:
->
-> `∀ t₁ ∈ r₁ : t₁[FK] ≠ NULL ⟹ ∃ t₂ ∈ r₂ : t₁[FK] = t₂[PK₂]`
->
-> Esta é a **restrição de integridade referencial**: todo valor não-nulo da FK deve corresponder a uma tupla existente na relação referenciada.
+> **Def. 2.5 — Chave Estrangeira (FK):** `FK ⊆ atributos(R₁)` referenciando `PK` de `R₂`:  
+> `∀ t₁ ∈ r₁ : t₁[FK] ≠ NULL ⟹ ∃ t₂ ∈ r₂ : t₁[FK] = t₂[PK₂]`  
+> Todo valor não-nulo da FK deve corresponder a uma tupla existente em `R₂`.
 
-### 2.2 Propriedades e Teoremas
+> **Teorema 2.1:** Em qualquer relação `R`, existe ao menos uma chave candidata.  
+> *(O conjunto total de atributos sempre é superchave; por minimização, existe ao menos uma candidata mínima.)*
 
-> **Teorema 2.1:**  
-> Todo conjunto de todos os atributos de uma relação `R` é sempre uma superchave (trivial) de `R`.  
-> *Demonstração:* Se duas tuplas diferem em ao menos um atributo, elas diferem em seu conjunto total de atributos. □
+---
 
-> **Teorema 2.2:**  
-> Em qualquer relação `R`, existe ao menos uma chave candidata.  
-> *Demonstração:* O conjunto total de atributos é superchave. Por processo de eliminação mínima, existe ao menos uma superchave mínima (chave candidata). □
+### 💡 Intuição
 
-> **Corolário 2.1:**  
-> A chave primária sempre existe e é única (como escolha), mas podem existir múltiplas chaves candidatas.
-
-> **Definição 2.6 — Violação de Integridade Referencial:**  
-> Diz-se que uma instância `DB = {r₁, r₂}` viola a integridade referencial se:  
-> `∃ t₁ ∈ r₁ : t₁[FK] ≠ NULL ∧ ¬∃ t₂ ∈ r₂ : t₁[FK] = t₂[PK₂]`
-
-### 2.3 Intuição
-
-A hierarquia de chaves segue uma relação de inclusão:
+A hierarquia de chaves é uma relação de especialização:
 
 ```
-Superchave
-  └─ Chave Candidata  (superchave mínima)
-       ├─ Chave Primária   (candidata escolhida, NOT NULL)
-       └─ Chave Alternada  (candidata não-escolhida, UNIQUE NOT NULL)
+Superchave           → qualquer conjunto que identifica unicamente
+  └─ Chave Candidata → superchave mínima (sem gordura)
+       ├─ Chave Primária  → candidata escolhida (NOT NULL obrigatório)
+       └─ Chave Alternada → candidata rejeitada (UNIQUE NOT NULL)
 
-Chave Estrangeira: atributo em R₁ que aponta para PK de R₂
+Chave Estrangeira    → "ponteiro" de uma tabela para a PK de outra
 ```
 
-**Por que a minimalidade importa?** Uma PK com atributos desnecessários causa problemas nas tabelas associativas — uma PK composta com atributo extra exige mais espaço em índices e complica JOINs. A minimalidade garante que cada atributo da chave é **semanticamente necessário** para a identificação.
+**Por que a minimalidade importa?**  
+Uma PK com atributos desnecessários encarece índices, complica JOINs e pode mascarar dependências funcionais que gerariam anomalias. Cada atributo da PK deve ser semanticamente **necessário** para a identificação.
 
-### 2.4 Aplicação no Spotify
+**Regra prática:** Se você pode remover um atributo da chave e ela ainda identifica unicamente — o atributo é extrâneo e deve sair.
+
+---
+
+### 🎵 Aplicação no Spotify
 
 ```
 USUARIO(id_usuario, nome, email, data_nascimento, pais, plano)
 
-Superchaves:
-  {id_usuario}                        ← mínima
-  {email}                             ← mínima
-  {id_usuario, nome}                  ← não-mínima (nome é redundante)
-  {id_usuario, email, pais, plano}    ← não-mínima
-  {todos os atributos}                ← não-mínima (trivial)
+Superchaves válidas (identificam unicamente):
+  {id_usuario}                     ← mínima ✅
+  {email}                          ← mínima ✅
+  {id_usuario, nome}               ← nome é redundante — não-mínima
+  {id_usuario, email, pais, plano} ← muito redundante — não-mínima
+  {todos os atributos}             ← trivialmente superchave — não-mínima
 
-Chaves candidatas:
-  CK₁ = {id_usuario}   → mínima: remover id_usuario → {} não é superchave
-  CK₂ = {email}        → mínima: emails são únicos por regra de negócio
+Chaves candidatas (mínimas):
+  CK₁ = {id_usuario}  → remover id_usuario → {} não identifica nada ✅
+  CK₂ = {email}       → emails são únicos por regra de negócio ✅
 
-Chave primária escolhida:  id_usuario  (inteiro, eficiente para JOINs)
-Chave alternada:           email       (UNIQUE NOT NULL)
+PK escolhida:    id_usuario  (inteiro — eficiente para índices e JOINs)
+Chave alternada: email       (UNIQUE NOT NULL — ainda garante unicidade)
 ```
 
 ```
@@ -210,1358 +183,1197 @@ REPRODUCAO(id_reproducao, id_usuario, id_musica, data_hora, segundos_ouvidos, di
 
 Chaves candidatas:
   CK₁ = {id_reproducao}
-        → {id_reproducao}⁺ = todos os atributos ✅
-        → mínima (atributo único) ✅
+        ↳ surrogate key, gerado automaticamente, garante unicidade ✅
 
   CK₂ = {id_usuario, id_musica, data_hora}
-        → determina segundos_ouvidos e dispositivo ✅
-        → mínima: nenhum subconjunto sozinho determina tudo ✅
+        ↳ um mesmo usuário não pode reproduzir a mesma música
+          exatamente no mesmo instante de tempo ✅
 
-PK escolhida: id_reproducao  (surrogate key — mais simples para FKs futuras)
+PK escolhida: id_reproducao  (mais simples para referenciar em FKs futuras)
 ```
 
 ```
-Verificação de integridade referencial — exemplo formal:
+Tabelas associativas — PK composta:
 
-r(REPRODUCAO) contém t₁ com t₁[id_usuario] = 42
-Exige: ∃ t₂ ∈ r(USUARIO) tal que t₂[id_usuario] = 42
-
-Se tentarmos INSERT INTO REPRODUCAO com id_usuario = 999 (inexistente):
-  → SGBD rejeita: violação de integridade referencial
-  → Garante: nenhuma reprodução 'órfã' sem usuário correspondente
+USUARIO_CURTE_MUSICA
+  PK = (id_usuario, id_musica)
+  ↳ um usuário pode curtir cada música no máximo 1 vez (par único)
+  ↳ remover id_usuario → múltiplos usuários para mesma música → não identifica
+  ↳ remover id_musica  → múltiplas músicas para mesmo usuário → não identifica
+  → ambos os atributos são necessários na PK composta ✅
 ```
 
 ```sql
 -- Implementação SQL das restrições de chave no Spotify
 
--- Chave primária simples
-CREATE TABLE MUSICA (
-    id_musica    INTEGER     PRIMARY KEY,   -- PK
-    titulo       VARCHAR(200) NOT NULL,
-    duracao_seg  INTEGER     NOT NULL CHECK (duracao_seg > 0),
-    letra        TEXT
-);
-
--- Chave alternada
 CREATE TABLE USUARIO (
-    id_usuario      INTEGER     PRIMARY KEY,        -- PK
-    email           VARCHAR(150) NOT NULL UNIQUE,   -- Chave alternada
-    nome            VARCHAR(100) NOT NULL,
-    plano           VARCHAR(20)  DEFAULT 'gratuito'
-                    CHECK (plano IN ('gratuito','premium'))
+    id_usuario  INTEGER      PRIMARY KEY,                   -- PK: NOT NULL + UNIQUE
+    email       VARCHAR(150) NOT NULL UNIQUE,               -- Chave alternada
+    nome        VARCHAR(100) NOT NULL,
+    plano       VARCHAR(20)  DEFAULT 'gratuito'
+                             CHECK (plano IN ('gratuito','premium'))
 );
 
--- PK composta (tabela associativa)
-CREATE TABLE USUARIO_CURTE_MUSICA (
-    id_usuario   INTEGER REFERENCES USUARIO(id_usuario),  -- FK
-    id_musica    INTEGER REFERENCES MUSICA(id_musica),    -- FK
-    data_curtida TIMESTAMP DEFAULT NOW(),
-    PRIMARY KEY (id_usuario, id_musica)                   -- PK composta
-);
-
--- FK com ação referencial
 CREATE TABLE REPRODUCAO (
-    id_reproducao    INTEGER PRIMARY KEY,
-    id_usuario       INTEGER NOT NULL REFERENCES USUARIO(id_usuario) ON DELETE CASCADE,
-    id_musica        INTEGER NOT NULL REFERENCES MUSICA(id_musica)   ON DELETE RESTRICT,
+    id_reproducao    INTEGER   PRIMARY KEY,
+    id_usuario       INTEGER   NOT NULL
+                     REFERENCES USUARIO(id_usuario)          -- FK → USUARIO
+                     ON DELETE CASCADE,                      -- deletar usuário → remove plays
+    id_musica        INTEGER   NOT NULL
+                     REFERENCES MUSICA(id_musica)            -- FK → MUSICA
+                     ON DELETE RESTRICT,                     -- não pode deletar música com plays
     data_hora        TIMESTAMP NOT NULL,
     segundos_ouvidos INTEGER   NOT NULL,
     dispositivo      VARCHAR(30)
 );
+
+CREATE TABLE USUARIO_CURTE_MUSICA (
+    id_usuario   INTEGER REFERENCES USUARIO(id_usuario),    -- FK₁
+    id_musica    INTEGER REFERENCES MUSICA(id_musica),      -- FK₂
+    data_curtida TIMESTAMP DEFAULT NOW(),
+    PRIMARY KEY (id_usuario, id_musica)                     -- PK composta
+);
 ```
 
-> **Ações referenciais:** ao definir uma FK, o designer declara o que acontece se a tupla referenciada for deletada/atualizada:  
-> - `CASCADE`: propaga a operação (deletar usuário deleta suas reproduções)  
-> - `RESTRICT` / `NO ACTION`: impede a operação se houver dependentes  
-> - `SET NULL`: anula a FK (somente se ela aceitar NULL)  
-> - `SET DEFAULT`: atribui valor padrão
+**Ações referenciais ao deletar/atualizar:**
+
+| Ação | Comportamento | Uso no Spotify |
+|---|---|---|
+| `CASCADE` | Propaga a operação | Deletar usuário → remove suas reproduções |
+| `RESTRICT` | Bloqueia a operação | Não deleta música se houver plays |
+| `SET NULL` | Anula a FK | Somente se FK aceitar NULL |
+| `SET DEFAULT` | Atribui valor padrão | Casos raros |
+
+> **Violação de integridade referencial — exemplo:**  
+> `INSERT INTO REPRODUCAO (id_usuario=999, ...)` onde usuário 999 não existe em USUARIO  
+> → SGBD **rejeita** automaticamente — nenhuma reprodução "órfã" é possível.
 
 ---
 
 ## 3. Dependência Funcional
 
-### 3.1 Definição Formal
+### 🔷 Definição Formal
 
-> **Definição 3.1 — Dependência Funcional:**  
-> Seja `R(A₁, ..., Aₙ)` um esquema de relação e `X, Y ⊆ {A₁, ..., Aₙ}`.  
-> Dizemos que **X determina funcionalmente Y** (notação: `X → Y`) se e somente se:
->
-> `∀ r` instância válida de `R`, `∀ t₁, t₂ ∈ r :`  
-> `t₁[X] = t₂[X]  ⟹  t₁[Y] = t₂[Y]`
->
-> Equivalentemente: para cada valor de `X`, existe **no máximo um** valor de `Y` na relação.
+> **Def. 3.1 — Dependência Funcional (DF):**  
+> Sejam `X, Y ⊆ atributos(R)`. Dizemos que **X determina Y** (`X → Y`) se:  
+> `∀ r` instância válida de `R`, `∀ t₁, t₂ ∈ r : t₁[X] = t₂[X] ⟹ t₁[Y] = t₂[Y]`  
+> Para cada valor de X, existe **exatamente um** valor possível de Y.
 
-> **Definição 3.2 — Dependência Funcional Trivial:**  
-> `X → Y` é **trivial** se e somente se `Y ⊆ X`.  
-> Toda DF trivial é satisfeita por qualquer instância, pois as mesmas colunas sempre têm os mesmos valores.
+> **Def. 3.2 — DF Trivial:** `X → Y` é trivial se `Y ⊆ X` — sempre satisfeita, sem restrição real.
 
-> **Definição 3.3 — Dependência Funcional Não-Trivial:**  
-> `X → Y` é **não-trivial** se `Y ⊄ X` (Y contém ao menos um atributo fora de X).  
-> É **completamente não-trivial** se `X ∩ Y = ∅`.
+> **Def. 3.3 — DF Não-Trivial:** `X → Y` com `Y ⊄ X` — impõe restrição real sobre os dados.
 
-> **Definição 3.4 — Dependência Parcial:**  
-> Seja `K` uma chave candidata composta `K = {A₁, ..., Aₖ}`.  
-> Um atributo não-primo `B` (não pertencente a nenhuma chave candidata) tem **dependência parcial** em relação a `K` se:  
-> `∃ X ⊊ K : X → B`  
-> Ou seja: `B` depende de um **subconjunto próprio** da chave, não da chave inteira.
+> **Def. 3.4 — Dependência Parcial:**  
+> Atributo não-primo `B` tem dependência parcial se `∃ X ⊊ PK : X → B`.  
+> (B depende de **parte** da chave composta, não da chave inteira.) → **viola 2FN**
 
-> **Definição 3.5 — Dependência Transitiva:**  
-> Dizemos que `B` tem **dependência transitiva** de `K` via `Y` se:  
-> `K → Y`,  `Y → B`,  `Y ↛ K`  e  `B ∉ K`  
-> (`Y` determina `B`, mas `Y` não é chave — é um intermediário não-chave).
+> **Def. 3.5 — Dependência Transitiva:**  
+> `B` depende transitivamente de `K` se: `K → Y`, `Y → B`, `Y` não é chave.  
+> (B não depende diretamente da chave — vai por um intermediário não-chave.) → **viola 3FN**
 
-### 3.2 Axiomas de Armstrong (Sistema Completo e Sólido)
+**Axiomas de Armstrong** (sistema sólido e completo para derivar DFs):
 
-Os **Axiomas de Armstrong** formam um sistema de inferência **sólido** (toda DF derivada é válida) e **completo** (toda DF válida pode ser derivada).
-
-> **Axioma A1 — Reflexividade:**  
-> `Y ⊆ X  ⟹  X → Y`  
-> (Toda DF trivial vale.)
-
-> **Axioma A2 — Aumentatividade:**  
-> `X → Y  ⟹  XZ → YZ`,  para qualquer `Z`  
-> (Adicionar os mesmos atributos dos dois lados preserva a DF.)
-
-> **Axioma A3 — Transitividade:**  
-> `X → Y  ∧  Y → Z  ⟹  X → Z`  
-> (Determinação é transitiva.)
+| Axioma | Regra | Exemplo no Spotify |
+|---|---|---|
+| **A1 — Reflexividade** | `Y ⊆ X ⟹ X → Y` | `{id_musica, titulo} → titulo` (trivial) |
+| **A2 — Aumentatividade** | `X → Y ⟹ XZ → YZ` | `id_musica → titulo` ⟹ `{id_musica, duracao_seg} → {titulo, duracao_seg}` |
+| **A3 — Transitividade** | `X → Y ∧ Y → Z ⟹ X → Z` | `id_assinatura → tipo_plano` e `tipo_plano → valor_pago` ⟹ `id_assinatura → valor_pago` |
 
 **Regras derivadas** (provadas a partir dos axiomas):
 
-> **Regra R1 — União:**  
-> `X → Y  ∧  X → Z  ⟹  X → YZ`  
-> *Prova:* `X → Y` (dado); por A2, `X → XY`; `X → Z` (dado); por A2, `XY → YZ`; por A3, `X → YZ`. □
+| Regra | Enunciado |
+|---|---|
+| **R1 — União** | `X→Y ∧ X→Z ⟹ X→YZ` |
+| **R2 — Decomposição** | `X→YZ ⟹ X→Y ∧ X→Z` |
+| **R3 — Pseudotransitividade** | `X→Y ∧ WY→Z ⟹ WX→Z` |
 
-> **Regra R2 — Decomposição:**  
-> `X → YZ  ⟹  X → Y  ∧  X → Z`  
-> *Prova:* `Y ⊆ YZ`, então por A1, `YZ → Y`; por A3 com `X → YZ`, temos `X → Y`. Análogo para Z. □
+---
 
-> **Regra R3 — Pseudotransitividade:**  
-> `X → Y  ∧  WY → Z  ⟹  WX → Z`  
-> *Prova:* `X → Y`; por A2, `WX → WY`; por A3 com `WY → Z`, temos `WX → Z`. □
+### 💡 Intuição
 
-### 3.3 Conjunto de DFs vs. Instâncias
+Uma DF `X → Y` é uma **lei de negócio** expressa matematicamente:  
+"Dado o valor de X, o valor de Y está completamente determinado."
 
-> **Definição 3.6 — Satisfação:**  
-> Uma instância `r` **satisfaz** (ou **respeita**) uma DF `X → Y` se a condição da Def. 3.1 vale para todas as tuplas em `r`.
+- `id_musica → titulo` diz: "conhecendo o ID da música, sabemos exatamente seu título"
+- `titulo → id_musica` **não vale**: duas músicas diferentes podem ter o mesmo título
 
-> **Definição 3.7 — DF válida em esquema:**  
-> Uma DF `X → Y` é válida no esquema `R` se **toda** instância possível de `R` satisfaz `X → Y`.  
-> Isso é uma **restrição semântica** — não basta verificar uma instância atual; é preciso que a regra valha para qualquer estado futuro do banco.
+**Importante:** DFs são **restrições semânticas**, não observações dos dados. Ver uma instância onde `titulo → id_musica` parece valer não prova que a DF é válida — apenas uma regra de negócio confirma isso.
 
-**Implicação prática:** observar uma instância pode sugerir DFs, mas não prová-las. A validação definitiva vem do **domínio do problema** (regra de negócio), não dos dados.
+**Os três tipos problemáticos:**
+```
+Parcial (viola 2FN):
+  PK composta = (id_playlist, id_musica)
+  id_musica → titulo_musica   ← titulo depende só de PARTE da PK
+  Solução: titulo_musica vai para tabela MUSICA separada
 
-### 3.4 Tipos de Dependência — Quadro Completo
+Transitiva (viola 3FN):
+  id_assinatura → tipo_plano → valor_pago
+  valor_pago não depende diretamente da PK, vai por tipo_plano
+  Solução: criar tabela PLANO(tipo_plano, valor_pago)
 
-| Tipo | Definição | Impacto na Normalização |
-|---|---|---|
-| **Trivial** | `Y ⊆ X` | Nenhum — sempre satisfeita |
-| **Não-trivial** | `Y ⊄ X` | Base das restrições reais |
-| **Parcial** | `X ⊊ K → B` (K chave composta) | Viola a **2FN** |
-| **Transitiva** | `K → Y → B`, Y não-chave | Viola a **3FN** |
-| **Total** | `B` depende da chave inteira, não de subconjunto | Satisfaz a **2FN** |
-| **Multivalorada** | `X →→ Y` (Y independente do resto) | Base da **4FN** |
+Trivial (inofensiva):
+  {id_musica, titulo} → titulo   ← titulo já está no lado esquerdo
+  Sempre satisfeita, não impõe restrição real
+```
 
-### 3.5 Aplicação Sistemática no Spotify
+---
+
+### 🎵 Aplicação no Spotify
 
 ```
 ─── MUSICA(id_musica, titulo, duracao_seg, letra) ───
 
-DFs válidas (regras de negócio):
-  id_musica → titulo          [não-trivial, total]
-  id_musica → duracao_seg     [não-trivial, total]
-  id_musica → letra           [não-trivial, total — mesmo quando NULL]
-  id_musica → {titulo, duracao_seg, letra}   [por Regra R1 — União]
+DFs válidas (regras de negócio garantem):
+  id_musica → titulo          ✅  cada ID tem exatamente um título
+  id_musica → duracao_seg     ✅  cada ID tem exatamente uma duração
+  id_musica → letra           ✅  mesmo que seja NULL
 
-DFs inválidas (contraexemplos existem):
-  titulo → id_musica          ✗  duas músicas podem ter o mesmo título
-  duracao_seg → id_musica     ✗  muitas músicas têm 200 segundos
-  duracao_seg → titulo        ✗  idem
+  Por Regra R1 (União):
+  id_musica → {titulo, duracao_seg, letra}  ✅  determinação do conjunto inteiro
 
-DF trivial:
-  {id_musica, titulo} → titulo  [trivial: titulo ⊆ {id_musica, titulo}]
+DFs inválidas (contraexemplos existem nos dados):
+  titulo → id_musica          ❌  "Perfect" do Ed Sheeran ≠ "Perfect" de outro artista
+  duracao_seg → titulo        ❌  milhares de músicas têm 200 segundos
+  duracao_seg → id_musica     ❌  idem
+
+DF trivial (sempre satisfeita, sem restrição):
+  {id_musica, titulo} → titulo  ← titulo ⊆ {id_musica, titulo} → trivial
 ```
 
 ```
 ─── ASSINATURA(id_assinatura, id_usuario, tipo_plano, data_inicio, data_fim, valor_pago) ───
 
 DFs válidas:
-  id_assinatura → id_usuario      [determinante é chave → total]
-  id_assinatura → tipo_plano
-  id_assinatura → data_inicio
-  id_assinatura → data_fim
-  id_assinatura → valor_pago
-  tipo_plano → valor_pago         ← DEPENDÊNCIA TRANSITIVA!
-                                    id_assinatura → tipo_plano → valor_pago
-                                    viola 3FN
+  id_assinatura → id_usuario      ✅  cada assinatura pertence a um usuário
+  id_assinatura → tipo_plano      ✅
+  id_assinatura → data_inicio     ✅
+  id_assinatura → data_fim        ✅  NULL = assinatura ativa
+  tipo_plano    → valor_pago      ✅  regra de negócio: premium = R$21,90 sempre
 
-  Por Regra R1 (União):
-  id_assinatura → {id_usuario, tipo_plano, data_inicio, data_fim, valor_pago}
+  ⚠️  DEPENDÊNCIA TRANSITIVA detectada:
+  id_assinatura → tipo_plano → valor_pago
+  valor_pago depende de id_assinatura via tipo_plano (intermediário não-chave)
+  → viola 3FN → solução: criar PLANO(tipo_plano, valor_pago)
+
+DFs inválidas:
+  id_usuario → tipo_plano     ❌  usuário pode ter histórico de planos diferentes
+  data_inicio → id_usuario    ❌  múltiplas assinaturas começam na mesma data
 ```
 
 ```
 ─── PLAYLIST_MUSICA(id_playlist, id_musica, ordem, data_adicao) ───
-PK: {id_playlist, id_musica}
+PK composta: (id_playlist, id_musica)
 
 DFs:
-  (id_playlist, id_musica) → ordem        [total em relação à PK composta]
-  (id_playlist, id_musica) → data_adicao  [total]
+  (id_playlist, id_musica) → ordem       ✅  par único determina posição
+  (id_playlist, id_musica) → data_adicao ✅  par único determina quando foi adicionada
 
-  id_playlist → ordem     ✗  a mesma playlist tem músicas em posições diferentes
-  id_musica → ordem       ✗  a mesma música pode estar em posições diferentes em playlists diferentes
+  id_playlist → ordem    ❌  mesma playlist tem músicas em posições 1, 2, 3...
+  id_musica → ordem      ❌  mesma música pode ser posição 1 numa playlist, 7 em outra
 
-  → Sem dependências parciais: atende 2FN ✅
+  ✅  Sem dependências parciais → satisfaz 2FN
+  ✅  Sem dependências transitivas → satisfaz 3FN
 ```
 
+**Conexão formal entre chaves e DFs:**
+
+> **Teorema 3.1:** `X` é superchave de `R`  ⟺  `X → R` (X determina todos os atributos).  
+> **Teorema 3.2:** `X` é chave candidata  ⟺  `X → R` **e** `∀ Y ⊊ X : Y ↛ R`.
+
 ```
-─── REPRODUCAO ─── Exemplo de dependência transitiva potencial ───
-
-Se adicionássemos a regra: "dispositivo_sistema depende do dispositivo"
-  dispositivo → sistema_operacional  (ex: 'celular' → 'Android/iOS')
-
-Então:
-  id_reproducao → dispositivo → sistema_operacional
-  → sistema_operacional teria dependência TRANSITIVA de id_reproducao via dispositivo
-  → Violaria 3FN → sistema_operacional deveria ir para tabela DISPOSITIVO separada
+Verificação:
+  {id_musica} → {titulo, duracao_seg, letra}  e  id_musica → id_musica (trivial)
+  → {id_musica} → R  →  é superchave
+  → |{id_musica}| = 1 → mínima automaticamente → é chave candidata ✅
 ```
-
-### 3.6 Conexão com Chaves
-
-> **Teorema 3.1:**  
-> `X` é superchave de `R` se e somente se `X → A` para todo atributo `A` de `R`.  
-> Equivalentemente (usando Regra R1): `X` é superchave sse `X → R` (X determina toda a relação).
-
-> **Teorema 3.2:**  
-> `X` é chave candidata de `R` se e somente se:  
-> 1. `X → R` (X é superchave), **E**  
-> 2. `∀ Y ⊊ X : Y ↛ R` (nenhum subconjunto próprio é superchave)
-
-Estes teoremas ligam formalmente o conceito de chave com o de dependência funcional — chaves são exatamente os determinantes mínimos de toda a relação.
 
 ---
 
 ## 4. Fechamento de Atributos
 
-### 4.1 Definição Formal
+### 🔷 Definição Formal
 
-> **Definição 4.1 — Fechamento de um Conjunto de DFs:**  
-> Seja `F` um conjunto de DFs sobre `R`.  
-> O **fechamento de F**, denotado `F⁺`, é o conjunto de **todas** as DFs que podem ser derivadas de `F` usando os Axiomas de Armstrong:
->
+> **Def. 4.1 — Fechamento de F:** O **fechamento de F** (notação: `F⁺`) é o conjunto de **todas** as DFs deriváveis de `F` via Axiomas de Armstrong:  
 > `F⁺ = { X → Y | F ⊢ X → Y }`
->
-> onde `⊢` denota derivabilidade pelo sistema de Armstrong.
 
-> **Definição 4.2 — Fechamento de um Conjunto de Atributos:**  
-> Seja `X ⊆` atributos de `R` e `F` um conjunto de DFs.  
-> O **fechamento de X em relação a F**, denotado `X⁺` (ou `X⁺_F`), é:
->
-> `X⁺ = { A | X → A ∈ F⁺ }`
->
-> Ou seja: todos os atributos que X determina (direta ou transitivamente) sob F.
+> **Def. 4.2 — Fechamento de X:** O **fechamento de X em relação a F** (notação: `X⁺`) é:  
+> `X⁺ = { A | X → A ∈ F⁺ }`  
+> Todos os atributos que X determina direta ou transitivamente.
 
-> **Teorema 4.1 — Utilidade do Fechamento:**  
+> **Teorema 4.1 — Utilidade central:**  
 > `X → Y ∈ F⁺  ⟺  Y ⊆ X⁺`  
-> *Demonstração:*  
-> (⟹) Se `X → Y ∈ F⁺`, então por Regra R2 (Decomposição), `X → A ∈ F⁺` para cada `A ∈ Y`, logo `A ∈ X⁺` para cada A, portanto `Y ⊆ X⁺`.  
-> (⟸) Se `Y ⊆ X⁺`, então para cada `A ∈ Y`, `X → A ∈ F⁺`; por Regra R1 (União), `X → Y ∈ F⁺`. □
+> *(Verificar se X determina Y equivale a checar se Y está no fechamento de X — muito mais eficiente que computar F⁺ inteiro.)*
 
-**Importância:** o Teorema 4.1 transforma o problema de verificar se `X → Y ∈ F⁺` (que exigiria computar o conjunto potencialmente enorme `F⁺`) no problema mais simples de calcular `X⁺`.
+> **Corolário 4.1:** `X` é superchave de `R`  ⟺  `X⁺ = atributos(R)`
 
-### 4.2 Algoritmo de Fechamento
+> **Corolário 4.2:** `X` é chave candidata  ⟺  `X⁺ = atributos(R)` **e** `∀ A ∈ X : (X−{A})⁺ ≠ atributos(R)`
 
-> **Algoritmo CLOSURE(X, F):**
->
-> ```
-> Entrada: X ⊆ atributos(R),  F = conjunto de DFs
-> Saída:   X⁺
->
-> 1. resultado ← X
-> 2. mudou ← true
-> 3. enquanto mudou fazer:
->      mudou ← false
->      para cada DF (α → β) em F fazer:
->        se α ⊆ resultado então:
->          se β ⊄ resultado então:
->            resultado ← resultado ∪ β
->            mudou ← true
-> 4. retornar resultado
-> ```
+**Algoritmo CLOSURE(X, F):**
+```
+Entrada: X ⊆ atributos(R),  F = conjunto de DFs
+Saída:   X⁺
 
-> **Teorema 4.2 — Corretude e Completude do Algoritmo:**  
-> O algoritmo CLOSURE(X, F) computa corretamente `X⁺`:  
-> - **Corretude (solidez):** todo atributo adicionado ao resultado pode ser derivado de X via F usando Armstrong.  
-> - **Completude:** todo atributo em `X⁺` será adicionado ao resultado.  
-> - **Complexidade:** O(|F| · |atributos|²) no pior caso — polinomial.
+1. resultado ← X                     ← começa com o próprio X
+2. repita até não mudar:
+     para cada DF (α → β) em F:
+       se α ⊆ resultado:             ← se o lado esquerdo já foi alcançado
+         resultado ← resultado ∪ β   ← adiciona o lado direito
+3. retornar resultado
+```
 
-> **Corolário 4.1 — Verificação de Superchave:**  
-> `X` é superchave de `R`  ⟺  `X⁺ = atributos(R)`
+Complexidade: O(|F| · |atributos|²) — **polinomial**, eficiente na prática.
 
-> **Corolário 4.2 — Verificação de Chave Candidata:**  
-> `X` é chave candidata de `R` ⟺  
-> 1. `X⁺ = atributos(R)` (superchave), **E**  
-> 2. `∀ A ∈ X : (X − {A})⁺ ≠ atributos(R)` (minimalidade)
+---
 
-### 4.3 Aplicação Detalhada no Spotify
+### 💡 Intuição
+
+O fechamento `X⁺` responde à pergunta:  
+**"A partir de X, o que mais consigo descobrir usando as regras do sistema?"**
+
+Pense numa cadeia de deduções:  
+- Sei o `id_reproducao` → descubro `id_usuario`, `id_musica`, `data_hora`  
+- Com `id_usuario + id_musica + data_hora` → descubro `segundos_ouvidos` e `dispositivo`  
+- Resultado: a partir de `id_reproducao`, chego a **todos** os atributos → é chave!
+
+O **Teorema 4.1** é o ganho prático: em vez de computar `F⁺` (potencialmente exponencial), basta calcular `X⁺` (polinomial) para verificar qualquer DF.
+
+---
+
+### 🎵 Aplicação no Spotify
 
 ```
-Esquema: REPRODUCAO(id_reproducao, id_usuario, id_musica, data_hora, segundos_ouvidos, dispositivo)
-Abreviações: R=id_reproducao, U=id_usuario, M=id_musica, D=data_hora, S=segundos_ouvidos, V=dispositivo
+─── Calcular {id_reproducao}⁺ ───
+Abreviações: R=id_reproducao, U=id_usuario, M=id_musica, D=data_hora, S=segundos, V=dispositivo
 
 Conjunto F:
-  F1: R → U
-  F2: R → M
-  F3: R → D
-  F4: (U, M, D) → S
-  F5: (U, M, D) → V
+  F1: R → U           F2: R → M           F3: R → D
+  F4: (U,M,D) → S     F5: (U,M,D) → V
 
-Calcular {R}⁺:
-
-  Iteração 1:
-    resultado = {R}
-    F1: R ⊆ {R} ✓ → resultado = {R, U}
-    F2: R ⊆ {R, U} ✓ → resultado = {R, U, M}
-    F3: R ⊆ {R, U, M} ✓ → resultado = {R, U, M, D}
-    F4: {U,M,D} ⊆ {R,U,M,D} ✓ → resultado = {R, U, M, D, S}
-    F5: {U,M,D} ⊆ {R,U,M,D,S} ✓ → resultado = {R, U, M, D, S, V}
-    mudou = true
-
-  Iteração 2:
-    Nenhuma DF adiciona novo atributo → mudou = false → PARA
+Passo a passo:
+  Início:     resultado = {R}
+  F1 aplica:  R ⊆ {R} ✓          → resultado = {R, U}
+  F2 aplica:  R ⊆ {R, U} ✓       → resultado = {R, U, M}
+  F3 aplica:  R ⊆ {R, U, M} ✓    → resultado = {R, U, M, D}
+  F4 aplica:  {U,M,D} ⊆ resultado → resultado = {R, U, M, D, S}
+  F5 aplica:  {U,M,D} ⊆ resultado → resultado = {R, U, M, D, S, V}
+  ─── nenhuma DF adiciona mais → encerra ───
 
   {R}⁺ = {R, U, M, D, S, V} = todos os atributos ✅
-  → id_reproducao é SUPERCHAVE
+  → id_reproducao é SUPERCHAVE → e como tem 1 atributo, é CHAVE CANDIDATA
 ```
 
 ```
-Verificar minimalidade de {R} = {id_reproducao}:
-  Só tem 1 atributo → nenhum subconjunto próprio não-vazio → é CHAVE CANDIDATA ✅
+─── Verificar se (id_usuario, id_musica, data_hora) é chave candidata ───
+
+Calcular {U, M, D}⁺:
+  Início:     resultado = {U, M, D}
+  F4 aplica:  {U,M,D} ⊆ {U,M,D} ✓  → resultado = {U, M, D, S}
+  F5 aplica:  {U,M,D} ⊆ resultado ✓ → resultado = {U, M, D, S, V}
+  F1: R ⊆ resultado? R ∉ {U,M,D,S,V} ✗ → não aplica
+  ─── encerra ───
+
+  {U,M,D}⁺ = {U, M, D, S, V}  → R não está! → NÃO é superchave de R completo
+  (Se removêssemos id_reproducao do esquema, {U,M,D} seria a única chave)
 ```
 
 ```
-Verificar se {U, M, D} = {id_usuario, id_musica, data_hora} é chave candidata:
+─── Verificar se id_assinatura → valor_pago ∈ F⁺ ───
 
-  Calcular {U, M, D}⁺:
-    resultado = {U, M, D}
-    F4: {U,M,D} ⊆ {U,M,D} ✓ → resultado = {U, M, D, S}
-    F5: {U,M,D} ⊆ {U,M,D,S} ✓ → resultado = {U, M, D, S, V}
-    Nenhuma DF adicionada adiciona R, U, M, D já estão
-    → resultado final = {U, M, D, S, V}
-    → R ∉ resultado → {U,M,D}⁺ ≠ todos os atributos ✗
-    → NÃO é superchave (a menos que R não seja atributo independente)
+F de ASSINATURA inclui:
+  G1: id_assinatura → tipo_plano
+  G2: tipo_plano → valor_pago
 
-  Observação: se R for gerado como SERIAL/autoincremento,
-  é independente e {U,M,D} não o determina.
-  Portanto {U,M,D} não é chave candidata neste esquema.
-  Se removêssemos R, {U,M,D} seria a única chave candidata.
+Calcular {id_assinatura}⁺:
+  Início:     resultado = {id_assinatura}
+  G1 aplica:  → resultado = {id_assinatura, tipo_plano}
+  G2 aplica:  tipo_plano ∈ resultado → resultado = {id_assinatura, tipo_plano, valor_pago}
+
+  valor_pago ∈ resultado ✅
+  → id_assinatura → valor_pago ∈ F⁺  (por transitividade via tipo_plano)
+  → dependência TRANSITIVA detectada → viola 3FN
 ```
 
 ```
-Verificar se tipo_plano → valor_pago ∈ F⁺ (para ASSINATURA):
+─── Testar minimalidade da PK composta de PLAYLIST_MUSICA ───
+PK = (id_playlist, id_musica)
+F = { (id_playlist,id_musica)→ordem, (id_playlist,id_musica)→data_adicao }
 
-  Conjunto F de ASSINATURA inclui:
-    G1: id_assinatura → tipo_plano
-    G2: tipo_plano → valor_pago
+Tentar remover id_playlist:
+  {id_musica}⁺ = {id_musica}  → ordem ∉ resultado ✗ → id_playlist é necessário
 
-  Calcular {tipo_plano}⁺:
-    resultado = {tipo_plano}
-    G2: tipo_plano ⊆ {tipo_plano} ✓ → resultado = {tipo_plano, valor_pago}
-    → valor_pago ∈ {tipo_plano}⁺ ✅
+Tentar remover id_musica:
+  {id_playlist}⁺ = {id_playlist} → ordem ∉ resultado ✗ → id_musica é necessário
 
-  Portanto: tipo_plano → valor_pago ∈ F⁺
-
-  Por Transitividade:
-    id_assinatura → tipo_plano (G1)
-    tipo_plano → valor_pago (G2)
-    ∴ id_assinatura → valor_pago ∈ F⁺ ← dependência TRANSITIVA
-```
-
-```
-Calcular {id_playlist, id_musica}⁺ em PLAYLIST_MUSICA:
-
-  F = { (id_playlist, id_musica) → ordem,
-        (id_playlist, id_musica) → data_adicao }
-
-  resultado = {id_playlist, id_musica}
-  Aplica DF1 → {id_playlist, id_musica, ordem}
-  Aplica DF2 → {id_playlist, id_musica, ordem, data_adicao}
-
-  = todos os atributos ✅ → é chave candidata (e PK)
-```
-
-### 4.4 Uso Prático: Descoberta de Chaves
-
-O fechamento de atributos é a ferramenta central para **descobrir todas as chaves candidatas** de um esquema dado um conjunto F de DFs. O processo geral é:
-
-```
-Para cada subconjunto X de atributos(R):
-  1. Calcular X⁺
-  2. Se X⁺ = todos os atributos → X é superchave
-  3. Verificar minimalidade → se mínima, é chave candidata
-
-Problema: exponencial no número de atributos no pior caso.
-Otimização: começar pelos subconjuntos menores e podar.
+→ PK composta (id_playlist, id_musica) é chave candidata mínima ✅
 ```
 
 ---
 
 ## 5. Equivalência de Dependências Funcionais
 
-### 5.1 Definições Formais
+### 🔷 Definição Formal
 
-> **Definição 5.1 — Cobertura:**  
-> Um conjunto de DFs `F` **cobre** um conjunto `G` (notação: `F ↠ G` ou `G ⊆ F⁺`) se e somente se:
->
-> `∀ (X → Y) ∈ G : X → Y ∈ F⁺`
->
-> Equivalentemente (pelo Teorema 4.1): `∀ (X → Y) ∈ G : Y ⊆ X⁺_F`  
-> (O fechamento de X calculado usando F contém Y.)
+> **Def. 5.1 — Cobertura:** `F` **cobre** `G` (notação: `G ⊆ F⁺`) se:  
+> `∀ (X → Y) ∈ G : Y ⊆ X⁺_F`  
+> (Todo X → Y de G pode ser derivado usando apenas as DFs de F.)
 
-> **Definição 5.2 — Equivalência de Conjuntos de DFs:**  
-> Dois conjuntos `F` e `G` são **equivalentes** (notação: `F ≡ G`) se e somente se:
->
-> `F ↠ G  ∧  G ↠ F`
->
-> Ou seja: `F⁺ = G⁺` — ambos derivam exatamente as mesmas DFs.
+> **Def. 5.2 — Equivalência:** `F ≡ G` se e somente se `F` cobre `G` **e** `G` cobre `F`.  
+> Equivalentemente: `F⁺ = G⁺` — ambos os conjuntos derivam exatamente as mesmas DFs.
 
-> **Teorema 5.1 — Equivalência via Fechamentos:**  
-> `F ≡ G  ⟺  F⁺ = G⁺`  
-> *Demonstração:*  
-> (⟹) F ↠ G implica G ⊆ F⁺; G ↠ F implica F ⊆ G⁺. Por Armstrong, F⁺ ⊆ (G⁺)⁺ = G⁺ e G⁺ ⊆ F⁺, logo F⁺ = G⁺.  
-> (⟸) Se F⁺ = G⁺, então G ⊆ G⁺ = F⁺ (F cobre G) e F ⊆ F⁺ = G⁺ (G cobre F). □
+> **Teorema 5.1:** `F ≡ G ⟺ F⁺ = G⁺`
 
-### 5.2 Algoritmo para Verificar Equivalência
-
+**Algoritmo para verificar se F ≡ G:**
 ```
-Algoritmo EQUIVALENTE(F, G):
-  Retorna true se F ≡ G
+1. Para cada (X → Y) em G:
+     Calcular X⁺ usando apenas F
+     Se Y ⊄ X⁺: retornar "F NÃO cobre G" ✗
 
-  Passo 1: Verificar se F cobre G
-    Para cada (X → Y) em G:
-      Calcular X⁺ usando F
-      Se Y ⊄ X⁺: retornar false  ← F não cobre G
+2. Para cada (X → Y) em F:
+     Calcular X⁺ usando apenas G
+     Se Y ⊄ X⁺: retornar "G NÃO cobre F" ✗
 
-  Passo 2: Verificar se G cobre F
-    Para cada (X → Y) em F:
-      Calcular X⁺ usando G
-      Se Y ⊄ X⁺: retornar false  ← G não cobre F
-
-  Passo 3: retornar true
+3. Retornar "F ≡ G" ✅
 ```
 
-**Complexidade:** O(|F|·|G|·|atributos|²) — eficiente na prática.
+---
 
-### 5.3 Intuição
+### 💡 Intuição
 
-Dois conjuntos de DFs são equivalentes quando capturam exatamente a mesma **semântica** do esquema, mesmo que escritos de formas diferentes. É como ter duas representações diferentes da mesma lei de negócio — podem parecer distintas, mas impõem as mesmas restrições sobre os dados.
+Dois conjuntos de DFs são equivalentes quando capturam a **mesma semântica**, mesmo escritos de formas diferentes.
 
-**Por que isso importa?** Ao normalizar, podemos substituir F por qualquer G ≡ F que seja mais simples (sua cobertura canônica), sem alterar as garantias de integridade do esquema.
+É como ter duas formas de escrever a mesma lei:
+- Lei A: "Imposto = 10% do salário; salário determina cargo"
+- Lei B: "Imposto = 10% do salário; salário determina cargo; salário determina imposto"
 
-### 5.4 Aplicação no Spotify
+Lei B tem uma regra a mais, mas ela é **derivável** das duas primeiras — as leis são equivalentes.
+
+**Por que isso importa na prática?**  
+Ao normalizar, substituímos F pela sua **cobertura canônica** (seção 6) — um conjunto equivalente mais enxuto — sem perder nenhuma restrição de integridade.
+
+---
+
+### 🎵 Aplicação no Spotify
 
 ```
-Esquema: ASSINATURA(id_assinatura, id_usuario, tipo_plano, data_inicio, data_fim, valor_pago)
+─── ASSINATURA: F (expandido) ≡ G (compacto)? ───
 
-Conjunto F (forma expandida):
+Conjunto F (todas as DFs explicitadas):
   F1: id_assinatura → id_usuario
   F2: id_assinatura → tipo_plano
   F3: id_assinatura → data_inicio
   F4: id_assinatura → data_fim
-  F5: id_assinatura → valor_pago
+  F5: id_assinatura → valor_pago    ← derivável transitivamente
   F6: tipo_plano → valor_pago
 
-Conjunto G (forma compacta proposta):
+Conjunto G (forma compacta):
   G1: id_assinatura → {id_usuario, tipo_plano, data_inicio, data_fim}
-  G2: tipo_plano → valor_pago
+  G2: tipo_plano → valor_pago       ← a raiz da transitividade fica explícita
+```
 
-─── Verificar F cobre G ───
+```
+Verificar F cobre G:
 
   G1: X = {id_assinatura}, Y = {id_usuario, tipo_plano, data_inicio, data_fim}
-    {id_assinatura}⁺ usando F:
+    {id_assinatura}⁺ via F:
       F1 → +id_usuario
       F2 → +tipo_plano
       F3 → +data_inicio
       F4 → +data_fim
       F5 → +valor_pago
-      F6: tipo_plano ∈ resultado → +valor_pago (já está)
+      F6: tipo_plano ∈ resultado → +valor_pago (já estava)
     = {id_assinatura, id_usuario, tipo_plano, data_inicio, data_fim, valor_pago}
     Y ⊆ resultado ✅
 
   G2: X = {tipo_plano}, Y = {valor_pago}
-    {tipo_plano}⁺ usando F:
-      F6: tipo_plano → valor_pago → resultado = {tipo_plano, valor_pago}
+    {tipo_plano}⁺ via F: F6 → {tipo_plano, valor_pago}
     valor_pago ∈ resultado ✅
 
   → F cobre G ✅
+```
 
-─── Verificar G cobre F ───
+```
+Verificar G cobre F:
 
-  F1: {id_assinatura}⁺ usando G:
-    G1 → {id_assinatura, id_usuario, tipo_plano, data_inicio, data_fim}
-    G2: tipo_plano ∈ resultado → +valor_pago
-    = todos ✅ id_usuario ∈ resultado ✅
-
-  F5: {id_assinatura}⁺ usando G (mesmo cálculo acima):
+  F5: X = {id_assinatura}, Y = {valor_pago}
+    {id_assinatura}⁺ via G:
+      G1 → +id_usuario, +tipo_plano, +data_inicio, +data_fim
+      G2: tipo_plano ∈ resultado → +valor_pago  ← chega via G2!
     valor_pago ∈ resultado ✅
 
-  (Demais DFs de F: análogo — todas cobertas por G) ✅
+  (F1~F4, F6: análogo — todos cobertos por G) ✅
 
   → G cobre F ✅
 
 Conclusão: F ≡ G ✅
-G é uma representação mais compacta da mesma semântica.
+G é mais compacto mas representa a mesma semântica.
 ```
 
 ```
-Exemplo de conjuntos NÃO equivalentes no Spotify:
+─── Exemplo de NÃO equivalência ───
 
 H1 = { id_musica → titulo,
         id_musica → duracao_seg }
 
-H2 = { id_musica → titulo }
+H2 = { id_musica → titulo }   ← perdeu a DF sobre duração
 
-H1 cobre H2? Sim (H2 ⊂ H1).
-H2 cobre H1? 
-  Verificar: id_musica → duracao_seg ∈ H2⁺?
-  {id_musica}⁺ usando H2 = {id_musica, titulo}
+H1 cobre H2? ✅ (H2 ⊂ H1 literalmente)
+
+H2 cobre H1?
+  id_musica → duracao_seg ∈ H1
+  {id_musica}⁺ via H2 = {id_musica, titulo}
   duracao_seg ∉ {id_musica, titulo} ✗
 
-H1 ≢ H2  (H2 perde a DF sobre duracao_seg)
+H1 ≢ H2  → H2 perdeu informação semântica sobre duração
 ```
 
 ---
 
 ## 6. Cobertura Canônica
 
-### 6.1 Definições Formais
+### 🔷 Definição Formal
 
-> **Definição 6.1 — Atributo Extrâneo:**  
-> Seja `F` um conjunto de DFs e `X → Y ∈ F`.  
->
-> - Um atributo `A ∈ X` é **extrâneo no lado esquerdo** se:  
->   `Y ⊆ (X − {A})⁺_F`  
->   (Y ainda pode ser determinado sem A)
->
-> - Um atributo `A ∈ Y` é **extrâneo no lado direito** se:  
->   `A ∈ X⁺_{F − {X→Y} ∪ {X→(Y−{A})}}`  
->   (A pode ser derivado mesmo removendo-o do consequente desta DF)  
->   Equivalentemente: `F` com `X → Y` substituída por `X → (Y − {A})` ainda implica `X → A`.
+> **Def. 6.1 — Atributo Extrâneo (lado esquerdo):** `A ∈ X` é extrâneo em `X → Y` se:  
+> `Y ⊆ (X − {A})⁺_F`  (Y ainda é determinado sem A)
 
-> **Definição 6.2 — Cobertura Canônica (Forma Canônica / Minimal Cover):**  
-> Um conjunto `Fc` é a **cobertura canônica** de `F` se e somente se:
->
-> 1. `Fc ≡ F`  (equivalência)  
-> 2. Nenhuma DF em `Fc` possui atributo extrâneo no lado esquerdo  
-> 3. Nenhuma DF em `Fc` possui atributo extrâneo no lado direito  
-> 4. Nenhuma DF em `Fc` é redundante (pode ser removida mantendo equivalência)  
-> 5. Cada DF em `Fc` tem **lado direito com exatamente 1 atributo** (forma canônica)
+> **Def. 6.2 — Atributo Extrâneo (lado direito):** `A ∈ Y` é extrâneo em `X → Y` se:  
+> A ainda pode ser derivado com `X → (Y−{A})` no lugar de `X → Y`.
 
-> **Teorema 6.1 — Existência:**  
-> Todo conjunto finito de DFs `F` possui ao menos uma cobertura canônica `Fc`.  
-> *Nota:* A cobertura canônica pode **não ser única** — podem existir múltiplas Fc equivalentes mínimas.
+> **Def. 6.3 — Cobertura Canônica (Fc):** `Fc` é a cobertura canônica de `F` se:  
+> 1. `Fc ≡ F` (equivalentes)  
+> 2. Nenhuma DF de `Fc` tem atributo extrâneo no lado esquerdo  
+> 3. Nenhuma DF de `Fc` tem atributo extrâneo no lado direito  
+> 4. Nenhuma DF de `Fc` é redundante  
+> 5. Cada DF tem **exatamente 1 atributo** no lado direito (forma canônica)
 
-> **Teorema 6.2 — Uso na Síntese de 3FN:**  
-> O algoritmo de síntese para 3FN utiliza a cobertura canônica `Fc` como entrada:  
-> para cada DF `X → Y` em `Fc`, cria-se uma relação `R_i(X ∪ Y)` com `X` como chave.  
-> O resultado preserva todas as DFs e está em 3FN.
+> **Teorema 6.1:** Todo conjunto finito `F` possui ao menos uma cobertura canônica.  
+> *(A Fc pode não ser única — múltiplas formas mínimas podem existir.)*
 
-### 6.2 Algoritmo Completo
+> **Teorema 6.2 — Uso na 3FN:** O algoritmo de síntese 3FN usa `Fc` como entrada:  
+> para cada `X → A` em `Fc`, cria-se `Rᵢ(X ∪ {A})` com chave `X`.
 
+**Algoritmo CANONICAL_COVER(F):**
 ```
-Algoritmo CANONICAL_COVER(F):
+Passo 1 — Decomposição (lado direito atômico):
+  X → {A, B, C}  →  X→A, X→B, X→C
 
-─── Passo 1: Decomposição do lado direito ───
-  Para cada DF X → {A₁, A₂, ..., Aₖ} com k > 1:
-    Substituir por: X → A₁,  X → A₂,  ...,  X → Aₖ
-
-─── Passo 2: Remoção de atributos extrâneos no lado esquerdo ───
-  Para cada DF X → A em F (|X| > 1):
+Passo 2 — Remover atributos extrâneos no lado esquerdo:
+  Para cada DF X→A com |X|>1:
     Para cada B ∈ X:
-      Calcular (X − {B})⁺ usando F atual
-      Se A ∈ (X − {B})⁺:
-        Substituir X → A por (X − {B}) → A em F
+      Se A ∈ (X−{B})⁺:        ← B não é necessário
+        Substituir X por X−{B}
 
-─── Passo 3: Remoção de DFs redundantes ───
-  Para cada DF X → A em F:
-    Calcular X⁺ usando F − {X → A}
-    Se A ∈ X⁺:
-      Remover X → A de F  (é redundante)
+Passo 3 — Remover DFs redundantes:
+  Para cada DF X→A:
+    Se A ∈ X⁺ calculado com F−{X→A}: ← A ainda é alcançável sem esta DF
+      Remover X→A de F
 
-─── Retornar F como Fc ───
-
-Observação: os passos 2 e 3 podem precisar ser repetidos,
-pois remoções podem abrir novas redundâncias.
+Retornar F como Fc
 ```
 
-### 6.3 Intuição
+---
 
-A cobertura canônica é a "forma mais enxuta" de expressar as mesmas restrições semânticas. É análoga à forma irredutível de uma equação algébrica: `2x + 4 = 10` e `x = 3` expressam a mesma restrição, mas a segunda é mínima.
+### 💡 Intuição
 
-No contexto de banco de dados, usar `Fc` em vez de `F` para guiar a normalização garante que criamos o **menor número possível de tabelas**, sem perder nenhuma restrição de integridade.
+A cobertura canônica é a **versão mínima** de um conjunto de DFs — sem gordura, sem redundâncias, sem atributos desnecessários.
 
-### 6.4 Aplicação Detalhada no Spotify
+É como simplificar uma equação:  
+`2x + 4 = 10  →  x = 3`  
+Ambas expressam a mesma restrição, mas a segunda é a forma mínima.
 
+**Por que isso importa?**  
+A normalização em 3FN usa `Fc` para criar o **menor número possível de tabelas**, cada uma com uma chave bem definida. Usar `F` em vez de `Fc` poderia gerar tabelas duplicadas ou com estrutura inflada.
+
+**Os três problemas que Fc elimina:**
 ```
-─── Exemplo 1: PLAYLIST_MUSICA ───
-Esquema: PLAYLIST_MUSICA(id_playlist, id_musica, ordem, data_adicao)
-Abreviações: P=id_playlist, M=id_musica, O=ordem, D=data_adicao
+1. Atributo extrâneo no lado esquerdo:
+   (id_usuario, id_musica, data_hora) → segundos  com  id_musica sozinho → segundos
+   → id_usuario e data_hora são extrâneos se id_musica já determina sozinho
+   (não é o caso no Spotify, mas ilustra o conceito)
 
-F inicial:
-  DF1: (P, M) → O
-  DF2: (P, M) → D
-  DF3: (P, M) → {O, D}    ← composta
+2. DF redundante:
+   { R→U, R→M, R→D, (U,M,D)→S,  R→S }
+   R→S é redundante: via R→U, R→M, R→D e então (U,M,D)→S chegamos a S mesmo sem R→S
 
-─── Passo 1: Decomposição ───
-  DF3 → DF1 e DF2 (já existem) → remover DF3
-  F = { (P,M) → O,  (P,M) → D }
-
-─── Passo 2: Atributos extrâneos no lado esquerdo ───
-  Para (P, M) → O: testar remover P:
-    {M}⁺ usando F = {M} → O ∉ {M} ✗ → P não é extrâneo
-  Testar remover M:
-    {P}⁺ usando F = {P} → O ∉ {P} ✗ → M não é extrâneo
-  Análogo para (P, M) → D.
-
-─── Passo 3: Redundâncias ───
-  Remover (P,M) → O:
-    F' = { (P,M) → D }
-    {P,M}⁺ usando F' = {P, M, D} → O ∉ resultado ✗ → NÃO redundante
-
-  Remover (P,M) → D:
-    F'' = { (P,M) → O }
-    {P,M}⁺ usando F'' = {P, M, O} → D ∉ resultado ✗ → NÃO redundante
-
-Fc = { (P,M) → O,  (P,M) → D }   ← já era minimal
+3. Lado direito composto:
+   R → {U, M, D}  →  R→U, R→M, R→D  (decompõe para forma canônica)
 ```
 
+---
+
+### 🎵 Aplicação no Spotify
+
 ```
-─── Exemplo 2: REPRODUCAO com redundância ───
+─── Exemplo 1: REPRODUCAO com DFs redundantes ───
 Abreviações: R=id_reproducao, U=id_usuario, M=id_musica, D=data_hora, S=segundos, V=dispositivo
 
-F = { R→U, R→M, R→D, R→S, R→V, (U,M,D)→S, (U,M,D)→V }
+F inicial (contém redundâncias):
+  DF1: R→U    DF2: R→M    DF3: R→D
+  DF4: R→S    ← suspeita de redundância
+  DF5: R→V    ← suspeita de redundância
+  DF6: (U,M,D)→S
+  DF7: (U,M,D)→V
+  DF8: R→{U,M,D}   ← lado direito composto
 
-─── Passo 1: Todas as DFs já têm 1 atributo no lado direito ───
+─── Passo 1: Decomposição ───
+  DF8: R→{U,M,D}  →  DF1(R→U), DF2(R→M), DF3(R→D) já existem → remover DF8
 
-─── Passo 2: Atributos extrâneos no lado esquerdo ───
-  (U,M,D) → S: testar remover U:
-    {M,D}⁺ = {M, D} → S ∉ resultado ✗ → U necessário
-  Testar remover M:
-    {U,D}⁺ = {U, D} → S ∉ resultado ✗ → M necessário
-  Testar remover D:
-    {U,M}⁺ = {U, M} → S ∉ resultado ✗ → D necessário
-  Análogo para (U,M,D) → V.
+─── Passo 3: Testar redundância de DF4 (R→S) ───
+  F' = F − {R→S}
+  {R}⁺ via F':
+    DF1: +U → DF2: +M → DF3: +D         ← chegou ao antecedente de DF6
+    DF6: {U,M,D} ⊆ resultado → +S ✅    ← S ainda alcançável!
+  → R→S é REDUNDANTE → remover DF4
 
-─── Passo 3: Redundâncias ───
-  Testar R → S (id_reproducao → segundos_ouvidos):
-    F' = F − {R→S}
-    {R}⁺ usando F':
-      R→U: +U  →  R→M: +M  →  R→D: +D
-      Agora {U,M,D} ⊆ resultado → (U,M,D)→S: +S  ✅
-    S ∈ {R}⁺ → R→S é REDUNDANTE → REMOVER
+─── Passo 3: Testar redundância de DF5 (R→V) ───
+  {R}⁺ via F sem DF4 e DF5:
+    DF1+DF2+DF3 → {R,U,M,D} → DF7: +V ✅
+  → R→V é REDUNDANTE → remover DF5
 
-  Testar R → V (id_reproducao → dispositivo):
-    Análogo: R→U, R→M, R→D no resultado; (U,M,D)→V: +V
-    V ∈ {R}⁺ → R→V é REDUNDANTE → REMOVER
-
-  Testar R → U:
-    F'' = F − {R→U} − {R→S} − {R→V}  (já removidos S, V)
-    {R}⁺ usando F'': R→M: +M; R→D: +D; {U,M,D}→S requer U → sem U, não aplica
-    U ∉ {R}⁺ → R→U NÃO é redundante ✅
-
-  (Demais: R→M, R→D: análogo — não redundantes)
+─── Passo 2: Testar extrâneos em (U,M,D)→S ───
+  Remover U: {M,D}⁺ = {M,D} → S ∉ resultado → U necessário ✅
+  Remover M: {U,D}⁺ = {U,D} → S ∉ resultado → M necessário ✅
+  Remover D: {U,M}⁺ = {U,M} → S ∉ resultado → D necessário ✅
 
 Fc = { R→U,  R→M,  R→D,
        (U,M,D)→S,  (U,M,D)→V }
 
-Interpretação: id_reproducao determina apenas o contexto (quem, o quê, quando);
-os valores de segundos e dispositivo são determinados pela chave natural (U,M,D).
+← Interpretação: id_reproducao determina "quem, o quê, quando";
+                 os valores de segundos e dispositivo emergem da chave natural.
 ```
 
 ```
-─── Exemplo 3: ASSINATURA com dependência transitiva ───
-F = { id_assinatura → id_usuario,
-      id_assinatura → tipo_plano,
-      id_assinatura → data_inicio,
-      id_assinatura → data_fim,
-      id_assinatura → valor_pago,
-      tipo_plano → valor_pago }
+─── Exemplo 2: ASSINATURA com dependência transitiva ───
+
+F original:
+  id_assinatura → id_usuario
+  id_assinatura → tipo_plano
+  id_assinatura → data_inicio
+  id_assinatura → data_fim
+  id_assinatura → valor_pago    ← testar redundância
+  tipo_plano → valor_pago
 
 ─── Passo 3: Testar id_assinatura → valor_pago ───
-  F' = F − {id_assinatura → valor_pago}
-  {id_assinatura}⁺ usando F':
+  F' = F − {id_assinatura→valor_pago}
+  {id_assinatura}⁺ via F':
     +id_usuario, +tipo_plano, +data_inicio, +data_fim
-    tipo_plano → valor_pago: +valor_pago ✅
-  valor_pago ∈ resultado → id_assinatura → valor_pago é REDUNDANTE → REMOVER
+    tipo_plano ∈ resultado → tipo_plano→valor_pago: +valor_pago ✅
+  → id_assinatura→valor_pago é REDUNDANTE → remover
 
 Fc = { id_assinatura → id_usuario,
        id_assinatura → tipo_plano,
        id_assinatura → data_inicio,
        id_assinatura → data_fim,
-       tipo_plano → valor_pago }       ← apenas 5 DFs, era 6
+       tipo_plano → valor_pago }    ← 5 DFs em vez de 6
 
-─── Implicação para normalização ───
-Fc indica que o esquema ASSINATURA viola 3FN:
-  tipo_plano → valor_pago   com   tipo_plano não sendo superchave
-
-Solução: decompor em:
-  PLANO(tipo_plano PK, valor_pago)
-  ASSINATURA(id_assinatura PK, id_usuario FK, tipo_plano FK, data_inicio, data_fim)
+─── Implicação: Fc revela violação de 3FN ───
+  tipo_plano → valor_pago  com tipo_plano não sendo superchave
+  → normalizar: separar PLANO(tipo_plano PK, valor_pago)
+                         ASSINATURA(id_assinatura, id_usuario, tipo_plano FK, data_inicio, data_fim)
 ```
 
-### 6.5 Conexão com as Formas Normais
-
-A cobertura canônica é a **entrada do algoritmo de síntese de 3FN**:
-
 ```
-Algoritmo de Síntese 3FN (visão geral):
+─── Exemplo 3: PLAYLIST_MUSICA — já é canônica ───
 
-Entrada: esquema R, conjunto F
-Saída:   decomposição em 3FN que preserva DFs e é com-perda-nula
+F = { (id_playlist,id_musica)→ordem, (id_playlist,id_musica)→data_adicao }
 
-1. Computar Fc = cobertura canônica de F
-2. Para cada X → A em Fc:
-     Criar relação Rᵢ com atributos X ∪ {A}, chave X
-3. Se nenhuma relação criada contém chave candidata de R:
-     Adicionar relação contendo uma chave candidata de R
-4. Eliminar relações redundantes (subconjuntos de outras)
+Passo 1: Lados direitos já atômicos ✅
+Passo 2: Testado na seção 4 — sem extrâneos ✅
+Passo 3: Remover qualquer DF deixa a outra sem cobrir o atributo removido ✅
+
+Fc = F  (já estava na forma canônica)
 ```
+
+**Conexão com as Formas Normais:**
+
+| Fc revela... | Forma normal violada | Solução |
+|---|---|---|
+| `X→A` com `X ⊊ PK` (dep. parcial) | **2FN** | Mover A para tabela onde X é PK |
+| `X→A` com `X` não-chave transitivo | **3FN** | Criar tabela para X→A |
+| `X→A` com `X` não-superchave | **BCNF** | Decompor em torno de X→A |
 
 ---
 
 ## 7. Anomalias no Modelo Relacional
 
-### 7.1 Fundamento Teórico — Por que Anomalias Surgem
+### 🔷 Definição Formal
 
-Anomalias são consequências diretas da presença de **dependências funcionais problemáticas** em um esquema mal projetado. Formalmente:
+> **Def. 7.1 — Redundância:** Um esquema `R` possui redundância se `∃ X → Y ∈ F⁺` com `X` não sendo superchave e `Y ⊄ X`. Um não-superchave determina outros atributos, forçando repetição de valores em múltiplas tuplas.
 
-> **Definição 7.1 — Esquema com Redundância:**  
-> Um esquema `R` com conjunto de DFs `F` possui **redundância** se existe uma DF `X → Y ∈ F⁺` tal que `X` não é superchave de `R` e `Y ⊄ X`.  
-> Ou seja: um não-superchave determina outros atributos, forçando repetição de valores.
+> **Def. 7.2 — 1FN:** `R` está em 1FN se todos os domínios contêm apenas valores atômicos — sem listas, conjuntos ou relações aninhadas.
 
-> **Teorema 7.1 — Condição Necessária para Anomalias:**  
-> Se um esquema `R` está na **BCNF** (Boyce-Codd Normal Form), então `R` não possui anomalias de atualização, inserção ou remoção.  
-> *Contraposição:* se `R` possui anomalias, então `R` não está em BCNF.
-
-As três formas normais formam uma hierarquia de proteção contra anomalias:
-
-```
-1FN ⊃ 2FN ⊃ 3FN ⊃ BCNF ⊃ 4FN ⊃ 5FN
-
-Cada forma normal elimina uma classe específica de anomalias.
-```
-
-#### Definições das Formas Normais
-
-> **Definição 7.2 — Primeira Forma Normal (1FN):**  
-> `R` está em 1FN se e somente se todos os domínios dos atributos contêm apenas valores atômicos (indivisíveis) — nenhum atributo contém conjuntos, listas ou relações aninhadas.
-
-> **Definição 7.3 — Segunda Forma Normal (2FN):**  
-> `R` está em 2FN se está em 1FN **e** todo atributo não-primo (não pertencente a nenhuma chave candidata) é **totalmente dependente** de cada chave candidata — sem dependências parciais.  
+> **Def. 7.3 — 2FN:** `R` está em 1FN **e** todo atributo não-primo tem dependência **total** de cada chave candidata — sem dependências parciais.  
 > Formalmente: `∄ X ⊊ CK, ∄ B não-primo : X → B ∈ F⁺`
 
-> **Definição 7.4 — Terceira Forma Normal (3FN):**  
-> `R` está em 3FN se está em 2FN **e** não existem dependências transitivas de atributos não-primos em relação a chaves candidatas.  
-> Formalmente: para toda `X → A ∈ F⁺` não-trivial com `A` não-primo: `X` deve ser superchave de `R`.  
-> Alternativa (Codd): para toda `X → A ∈ F⁺` não-trivial: `X` é superchave **ou** `A` é primo.
+> **Def. 7.4 — 3FN:** `R` está em 2FN **e** para toda `X → A ∈ F⁺` não-trivial: `X` é superchave **ou** `A` é atributo primo (pertence a alguma chave candidata).
 
-> **Definição 7.5 — Forma Normal de Boyce-Codd (BCNF):**  
-> `R` está em BCNF se, para toda `X → A ∈ F⁺` não-trivial: `X` é superchave de `R`.  
-> BCNF é mais restrita que 3FN: elimina também anomalias envolvendo atributos primos.
+> **Def. 7.5 — BCNF:** Para toda `X → A ∈ F⁺` não-trivial: `X` é superchave. *(Mais restrita que 3FN — elimina todas as anomalias.)*
 
-### 7.2 Os Três Tipos de Anomalia
+> **Teorema 7.1:** Se `R` está em BCNF, então `R` não possui anomalias de inserção, remoção ou atualização.  
+> *(Contraposição: anomalias existem → R não está em BCNF.)*
 
-#### Anomalia de Inserção
-
-> **Definição 7.6:**  
-> Uma **anomalia de inserção** ocorre quando não é possível inserir certos dados sem a presença de outros dados não relacionados, ou quando inserir um fato obriga a repetir informações já existentes.
-
-#### Anomalia de Remoção
-
-> **Definição 7.7:**  
-> Uma **anomalia de remoção** ocorre quando deletar uma tupla causa a perda inadvertida de informações sobre outras entidades, pois múltiplas entidades foram colapsadas em uma única tabela.
-
-#### Anomalia de Atualização
-
-> **Definição 7.8:**  
-> Uma **anomalia de atualização** (ou *update anomaly*) ocorre quando um único fato do mundo real está representado em múltiplas tuplas, exigindo que uma alteração seja propagada para todas elas para manter consistência. Atualização parcial gera **inconsistência**.
-
-### 7.3 Aplicação no Spotify — Esquema Desnormalizado
+**Hierarquia das formas normais:**
 
 ```
-Tabela desnormalizada FAIXA_COMPLETA:
-┌──────────┬───────────────────────┬──────────┬──────────┬──────────────────┬────────────┬────────────┬──────────────┐
-│ id_musica│ titulo_musica         │ id_album │ tit_album│ data_lancamento   │ id_artista │ nome_artis │ pais_artista │
-├──────────┼───────────────────────┼──────────┼──────────┼──────────────────┼────────────┼────────────┼──────────────┤
-│ 1        │ Blinding Lights       │ 10       │ After H. │ 2020-03-20       │ 5          │ The Weeknd │ CA           │
-│ 2        │ Starboy               │ 11       │ Starboy  │ 2016-11-25       │ 5          │ The Weeknd │ CA           │
-│ 3        │ Save Your Tears       │ 10       │ After H. │ 2020-03-20       │ 5          │ The Weeknd │ CA           │
-│ 4        │ Bohemian Rhapsody     │ 20       │ News W.  │ 1977-10-31       │ 8          │ Queen      │ GB           │
-└──────────┴───────────────────────┴──────────┴──────────┴──────────────────┴────────────┴────────────┴──────────────┘
+1FN ⊃ 2FN ⊃ 3FN ⊃ BCNF
+  ↑       ↑       ↑       ↑
+sem    sem dep. sem dep. todo
+listas  parcial  transit. determin.
+                          é superchave
+```
+
+---
+
+### 💡 Intuição
+
+Anomalias são **consequências diretas de misturar entidades diferentes em uma mesma tabela**. Sempre que um não-superchave determina outros atributos, os mesmos valores se repetem em várias linhas — e aí surgem os problemas.
+
+Há três tipos de anomalia:
+
+| Tipo | O problema | Pergunta diagnóstica |
+|---|---|---|
+| **Inserção** | Não consigo cadastrar X sem ter Y | "Preciso de outra entidade para inserir esta?" |
+| **Remoção** | Deletar X apaga Y junto sem querer | "Deletar esta linha perde dados de outra entidade?" |
+| **Atualização** | Mudar X exige atualizar N linhas | "Este fato aparece repetido em múltiplas linhas?" |
+
+**Regra prática:** se ao responder "sim" para qualquer uma das perguntas acima, o esquema precisa ser normalizado.
+
+---
+
+### 🎵 Aplicação no Spotify
+
+Imagine que, em vez de tabelas separadas, tivéssemos **uma única tabela desnormalizada**:
+
+```
+FAIXA_COMPLETA(
+  id_musica, titulo_musica, duracao_seg,
+  id_album, titulo_album, data_lancamento,
+  id_artista, nome_artista, pais_artista,
+  faixa_numero
+)
+
+Instância de exemplo:
+┌──────────┬───────────────────┬──────────┬──────────────┬──────────────────┬────────────┬────────────┬──────────────┐
+│ id_musica│ titulo_musica     │ id_album │ titulo_album │ data_lancamento   │ id_artista │ nome_artist│ pais_artista │
+├──────────┼───────────────────┼──────────┼──────────────┼──────────────────┼────────────┼────────────┼──────────────┤
+│ 1        │ Blinding Lights   │ 10       │ After Hours  │ 2020-03-20       │ 5          │ The Weeknd │ CA           │
+│ 2        │ Starboy           │ 11       │ Starboy      │ 2016-11-25       │ 5          │ The Weeknd │ CA           │ ← nome e pais
+│ 3        │ Save Your Tears   │ 10       │ After Hours  │ 2020-03-20       │ 5          │ The Weeknd │ CA           │ ← repetidos 3x
+│ 4        │ Bohemian Rhapsody │ 20       │ News o.World │ 1977-10-31       │ 8          │ Queen      │ GB           │
+└──────────┴───────────────────┴──────────┴──────────────┴──────────────────┴────────────┴────────────┴──────────────┘
 
 DFs problemáticas:
-  id_album → tit_album, data_lancamento   (id_album não é superchave)
-  id_artista → nome_artista, pais_artista (id_artista não é superchave)
-  → BCNF violada → anomalias esperadas
+  id_album → titulo_album, data_lancamento   (id_album não é superchave)
+  id_artista → nome_artista, pais_artista    (id_artista não é superchave)
+  → Viola BCNF e 3FN → anomalias garantidas
 ```
 
 ```
 ─── Anomalia de Inserção ───
 
-Problema: Cadastrar novo artista "Doja Cat" (id=99) sem músicas ainda.
+Cenário: cadastrar artista "Doja Cat" (id=99) que ainda não lançou músicas.
 
 INSERT INTO FAIXA_COMPLETA VALUES
-  (NULL, NULL, NULL, NULL, NULL, 99, 'Doja Cat', 'US')
+  (NULL, NULL, NULL, NULL, NULL, NULL, 99, 'Doja Cat', 'US', NULL)
 
-→ id_musica é PK (ou parte dela) → NOT NULL → INSERT rejeitado
-→ Impossível cadastrar artista sem música associada ✗
+→ id_musica faz parte da PK → NOT NULL → INSERT rejeitado ✗
+→ Impossível registrar a artista sem uma música associada
 
-No modelo normalizado:
+No modelo normalizado (ARTISTA separado):
   INSERT INTO ARTISTA VALUES (99, 'Doja Cat', 'US', NULL, 'solo') ✅
-  (independente de existirem músicas)
+  ← artista existe independentemente de ter músicas cadastradas
 ```
 
 ```
 ─── Anomalia de Remoção ───
 
-Problema: Remover a música "Bohemian Rhapsody" (única do álbum "News of the World" nesta tabela)
+Cenário: remover "Bohemian Rhapsody" (única linha do álbum "News of the World").
 
 DELETE FROM FAIXA_COMPLETA WHERE id_musica = 4
 
 → Junto com a música, perdemos:
-   - Dados do álbum: "News of the World", data 1977-10-31
-   - Dados do artista: Queen, GB
-   (se for a última linha do artista/álbum)
+   - Dados do álbum "News of the World" (data 1977-10-31)
+   - Dados de Queen (id=8, pais GB) — se for a última linha do artista
 
 No modelo normalizado:
   DELETE FROM MUSICA WHERE id_musica = 4
-  → ALBUM, ARTISTA, MUSICA_ARTISTA permanecem intactos ✅
+  → ALBUM e ARTISTA permanecem intactos ✅
+  ← cada entidade tem sua própria tabela — não há perda colateral
 ```
 
 ```
 ─── Anomalia de Atualização ───
 
-Problema: The Weeknd (id=5) atualiza país de 'CA' para 'US'
+Cenário: The Weeknd (id=5) atualiza país de 'CA' para 'US'.
 
-UPDATE FAIXA_COMPLETA SET pais_artista = 'US'
-WHERE id_artista = 5
+UPDATE FAIXA_COMPLETA SET pais_artista = 'US' WHERE id_artista = 5
+→ 3 linhas precisam ser atualizadas (músicas 1, 2 e 3)
 
-→ 3 linhas afetadas (músicas 1, 2, 3)
-→ Se apenas linha 1 for atualizada por engano:
-  ┌──────────┬───────────────────┬────────────┬──────────────┐
-  │ id_musica│ titulo            │ id_artista │ pais_artista │
-  ├──────────┼───────────────────┼────────────┼──────────────┤
-  │ 1        │ Blinding Lights   │ 5          │ US  ← novo   │
-  │ 2        │ Starboy           │ 5          │ CA  ← ANTIGO │  inconsistente!
-  │ 3        │ Save Your Tears   │ 5          │ CA  ← ANTIGO │  inconsistente!
-  └──────────┴───────────────────┴────────────┴──────────────┘
+Se por engano apenas a linha 1 for atualizada:
+┌──────────┬───────────────────┬────────────┬──────────────┐
+│ id_musica│ titulo_musica     │ id_artista │ pais_artista │
+├──────────┼───────────────────┼────────────┼──────────────┤
+│ 1        │ Blinding Lights   │ 5          │ US  ← novo   │
+│ 2        │ Starboy           │ 5          │ CA  ← ANTIGO │ ← inconsistente!
+│ 3        │ Save Your Tears   │ 5          │ CA  ← ANTIGO │ ← inconsistente!
+└──────────┴───────────────────┴────────────┴──────────────┘
 
 No modelo normalizado:
   UPDATE ARTISTA SET pais_origem = 'US' WHERE id_artista = 5
-  → 1 linha atualizada → consistência garantida ✅
+  → 1 UPDATE, 1 linha, consistência garantida ✅
+  ← o fato "país do artista" existe em apenas 1 lugar
 ```
 
-### 7.4 Diagnóstico pelo Teste de Formas Normais
+**Diagnóstico formal de FAIXA_COMPLETA:**
 
-```
-FAIXA_COMPLETA — diagnóstico completo:
-
-1FN: ✅ (valores atômicos — generos foram extraídos)
-
-2FN: ❌ PK hipotética = {id_musica, id_artista}
-  id_album → tit_album         (id_album ⊊ PK → dependência parcial)
-  id_artista → nome_artista    (id_artista ⊊ PK → dependência parcial)
-  → Viola 2FN
-
-3FN: ❌ (por consequência da violação de 2FN)
-
-BCNF: ❌ id_album → tit_album, mas id_album não é superchave
-         id_artista → nome_artista, id_artista não é superchave
-```
+| Forma Normal | Satisfaz? | Motivo |
+|---|---|---|
+| **1FN** | ✅ | Valores atômicos (gêneros já foram extraídos) |
+| **2FN** | ❌ | `id_artista → nome_artista` — id_artista é parte da PK composta |
+| **3FN** | ❌ | Consequência direta da violação de 2FN |
+| **BCNF** | ❌ | `id_album → titulo_album` com id_album não sendo superchave |
 
 ---
 
-## 8. Mapeamento do Modelo ER para o Relacional
+## 8. Mapeamento ER → Relacional
 
-### 8.1 Fundamentação Teórica
+### 🔷 Definição Formal
 
-O mapeamento ER → Relacional é um processo de **transformação semântica preservadora**:
+> **Def. 8.1 — Mapeamento Preservador:** Um mapeamento `M: ER → Relacional` é preservador se toda instância válida do DER tem representação válida no relacional e vice-versa — sem perda semântica.
 
-> **Definição 8.1 — Mapeamento Preservador:**  
-> Um mapeamento `M: ER → Relacional` é **preservador** se toda instância válida do esquema ER pode ser representada como instância válida do esquema relacional resultante, e vice-versa — sem perda semântica.
+> **Def. 8.2 — Decomposição Sem Perda (Lossless Join):**  
+> Decomposição de `R` em `{R₁, R₂}` é sem perda se:  
+> `r = π_{R₁}(r) ⋈ π_{R₂}(r)` para toda instância `r`.  
+> **Condição suficiente (Teorema de Heath):** A decomposição é sem perda se `R₁ ∩ R₂ → R₁ ∈ F⁺` ou `R₁ ∩ R₂ → R₂ ∈ F⁺`.  
+> *(A interseção dos esquemas é chave de ao menos um dos lados.)*
 
-> **Definição 8.2 — Decomposição Sem Perda (Lossless Join):**  
-> Uma decomposição de `R` em `{R₁, R₂}` é **sem perda** se para toda instância `r` de `R`:
->
-> `r = π_{R₁}(r) ⋈ π_{R₂}(r)`
->
-> onde `π` é projeção e `⋈` é junção natural.  
-> **Condição suficiente (Teorema de Heath):** A decomposição é sem perda se `R₁ ∩ R₂ → R₁` ou `R₁ ∩ R₂ → R₂` (a interseção é chave de um dos lados).
-
-> **Definição 8.3 — Preservação de Dependências:**  
-> Uma decomposição `{R₁, ..., Rₖ}` de `R` **preserva dependências** se:  
-> `(F₁ ∪ F₂ ∪ ... ∪ Fₖ)⁺ = F⁺`  
+> **Def. 8.3 — Preservação de Dependências:** Decomposição `{R₁, ..., Rₖ}` preserva DFs se:  
+> `(F₁ ∪ ... ∪ Fₖ)⁺ = F⁺`  
 > onde `Fᵢ` são as DFs de `F` projetadas sobre `Rᵢ`.
 
-### 8.2 As Sete Regras de Mapeamento
+---
 
-#### Regra 1 — Entidade Comum
+### 💡 Intuição
 
-> Para cada entidade `E` com atributos `{A₁, ..., Aₙ}` e chave `K`:  
-> Criar relação `R(A₁, ..., Aₙ)` com `PK = K`.  
-> Atributos compostos são **achatados** (sub-atributos viram colunas).  
-> Atributos derivados são **omitidos** (computados por VIEW).
+O mapeamento segue **7 regras sistemáticas** — cada elemento do DER tem uma tradução direta para o modelo relacional. A lógica geral é:
+
+- **Entidades** → tabelas próprias
+- **Atributos multivalorados** → tabelas auxiliares (preservam 1FN)
+- **Atributos derivados** → nunca viram colunas (calculados por VIEW)
+- **1:N** → FK no lado N
+- **N:M** → nova tabela associativa
+- **Recursivo N:M** → tabela associativa com FK duplo para a mesma tabela
+- **Entidade fraca** → tabela com FK NOT NULL + CASCADE
+
+---
+
+### 🎵 Aplicação no Spotify — As 7 Regras
 
 ```
+─── Regra 1: Entidade Comum → Tabela ───
+
 DER: MUSICA(id_musica*, titulo, duracao_seg, letra, duracao_media*)
-     (* = PK, * = derivado)
+     (* = PK, * = atributo derivado)
 
-SQL: MUSICA(id_musica PK, titulo, duracao_seg, letra)
-     -- duracao_media omitida: VIEW v_duracao_media
+Relacional: MUSICA(id_musica PK, titulo, duracao_seg, letra)
+            ← duracao_media omitida: é derivada → vai para VIEW
 ```
 
-#### Regra 2 — Atributo Multivalorado
-
-> Para cada atributo multivalorado `{M}` de entidade `E` com chave `K_E`:  
-> Criar relação `R_M(K_E, M)` onde `PK = {K_E, M}` ou `PK = surrogate + FK`.
-
 ```
-DER: ARTISTA com {redes_sociais} e MUSICA com {generos}
+─── Regra 2: Atributo Multivalorado → Nova Tabela ───
 
-SQL: REDES_SOCIAIS(id_rede PK, id_artista FK, plataforma, url)
-     GENERO_MUSICA(id_genero PK, id_musica FK, nome)
+DER: ARTISTA com {redes_sociais}
+     MUSICA  com {generos}
 
-Justificativa formal: {redes_sociais} viola 1FN se armazenado como lista;
-a tabela separada restaura a atomicidade.
+Relacional: REDES_SOCIAIS(id_rede PK, id_artista FK, plataforma, url)
+            GENERO_MUSICA(id_genero PK, id_musica FK, nome)
+
+← {redes_sociais} como coluna violaria 1FN (lista em célula única)
+← cada rede/gênero vira sua própria linha — atomicidade restaurada
 ```
 
-#### Regra 3 — Atributo Derivado
-
-> Atributos derivados **não geram colunas físicas**.  
-> Implementar como VIEW ou função computada.
-
 ```
-DER: ARTISTA.ouvintes_mensais* = COUNT DISTINCT usuários que ouviram no mês
+─── Regra 3: Atributo Derivado → VIEW ───
 
-VIEW:
+DER: ARTISTA.ouvintes_mensais* (derivado: usuários únicos que ouviram no mês)
+
+Relacional: nenhuma coluna criada
+
 CREATE VIEW v_ouvintes_mensais AS
-SELECT   ma.id_artista,
-         COUNT(DISTINCT r.id_usuario) AS ouvintes_mensais
-FROM     MUSICA_ARTISTA ma
-JOIN     REPRODUCAO r ON r.id_musica = ma.id_musica
-WHERE    r.data_hora >= date_trunc('month', NOW())
-GROUP BY ma.id_artista;
+  SELECT   ma.id_artista,
+           COUNT(DISTINCT r.id_usuario) AS ouvintes_mensais
+  FROM     MUSICA_ARTISTA ma
+  JOIN     REPRODUCAO r ON r.id_musica = ma.id_musica
+  WHERE    r.data_hora >= date_trunc('month', NOW())
+  GROUP BY ma.id_artista;
+
+← armazenar derivado criaria redundância e risco de inconsistência
+← VIEW sempre retorna o valor atual calculado dinamicamente
 ```
 
-#### Regra 4 — Relacionamento 1:N
-
-> Para relacionamento `1:N` entre `E₁` (lado 1) e `E₂` (lado N):  
-> Adicionar `FK = PK(E₁)` em `R₂` (tabela do lado N).  
-> Se participação de `E₂` for **total** (mandatória): `FK NOT NULL`.  
-> Se **parcial** (opcional): `FK NULL` (ou `NOT NULL` com JOIN opcional).
-
 ```
-Relacionamentos 1:N no Spotify:
+─── Regra 4: Relacionamento 1:N → FK no lado N ───
 
-  USUARIO(1) ─── cria ─── PLAYLIST(N) [total→total]
-    → PLAYLIST.id_usuario_criador FK NOT NULL → USUARIO
+DER: USUARIO (1,parcial) ──gera── (N,total) REPRODUCAO
+     MUSICA  (1,parcial) ──de──   (N,total) REPRODUCAO
 
-  USUARIO(1) ─── gera ─── REPRODUCAO(N) [parcial→total]
-    → REPRODUCAO.id_usuario FK NOT NULL
+Relacional: REPRODUCAO recebe:
+  id_usuario  FK NOT NULL → USUARIO   (total: toda reprodução tem usuário)
+  id_musica   FK NOT NULL → MUSICA    (total: toda reprodução é de uma música)
 
-  MUSICA(1) ─── de ─── REPRODUCAO(N) [parcial→total]
-    → REPRODUCAO.id_musica FK NOT NULL
-
-  USUARIO(1) ─── possui ─── ASSINATURA(N) [parcial→total]
-    → ASSINATURA.id_usuario FK NOT NULL
-
-Justificativa formal (Teorema de Heath):
-  Decompor R(usuario, playlist, ...) em USUARIO e PLAYLIST:
-  Interseção = {id_usuario} = PK de USUARIO → decomposição sem perda ✅
+Teorema de Heath (sem perda):
+  R₁ ∩ R₂ = {id_usuario} = PK de USUARIO → decomposição sem perda ✅
 ```
 
-#### Regra 5 — Entidade Fraca
-
-> Para entidade fraca `W` com entidade forte `E`:  
-> Criar `R_W` com FK para `E` (NOT NULL) + atributos discriminadores.  
-> PK de `R_W` = FK(E) + discriminador (ou surrogate key).  
-> Usar `ON DELETE CASCADE` (a parte não existe sem o todo).
-
 ```
-DER: REPRODUCAO é entidade fraca dependendo de USUARIO e MUSICA
+─── Regra 5: Entidade Fraca → FK NOT NULL + CASCADE ───
 
-SQL:
+DER: REPRODUCAO é entidade fraca (depende de USUARIO e MUSICA)
+
 CREATE TABLE REPRODUCAO (
-    id_reproducao    SERIAL PRIMARY KEY,
-    id_usuario       INT NOT NULL REFERENCES USUARIO(id_usuario) ON DELETE CASCADE,
-    id_musica        INT NOT NULL REFERENCES MUSICA(id_musica)   ON DELETE RESTRICT,
+    id_reproducao    SERIAL  PRIMARY KEY,
+    id_usuario       INTEGER NOT NULL
+                     REFERENCES USUARIO(id_usuario) ON DELETE CASCADE,
+    id_musica        INTEGER NOT NULL
+                     REFERENCES MUSICA(id_musica)   ON DELETE RESTRICT,
     data_hora        TIMESTAMP NOT NULL,
-    segundos_ouvidos INT NOT NULL,
+    segundos_ouvidos INTEGER   NOT NULL,
     dispositivo      VARCHAR(30)
 );
 
-Semântica: deletar um USUARIO remove todas as suas REPRODUCAO (CASCADE).
-           deletar uma MUSICA é bloqueado se há REPRODUCAO associadas (RESTRICT).
+← CASCADE: deletar usuário remove automaticamente suas reproduções
+← RESTRICT: não permite deletar música que ainda tem histórico de plays
 ```
 
-#### Regra 6 — Relacionamento N:M
-
-> Para relacionamento `N:M` entre `E₁` e `E₂` com atributos `{a₁, ..., aₖ}`:  
-> Criar tabela associativa `R_assoc(PK_E₁, PK_E₂, a₁, ..., aₖ)`.  
-> PK composta: `(PK_E₁, PK_E₂)`.  
-> Cada atributo de relacionamento vira coluna em `R_assoc`.
-
 ```
-DER: PLAYLIST ─── contém ─── MUSICA  [N:M]
-     Atributos: ordem, data_adicao
+─── Regra 6: Relacionamento N:M → Tabela Associativa ───
 
-SQL:
+DER: PLAYLIST ──contém── MUSICA  [N:M]
+     atributos do relacionamento: ordem, data_adicao
+
 CREATE TABLE PLAYLIST_MUSICA (
-    id_playlist  INT REFERENCES PLAYLIST(id_playlist),
-    id_musica    INT REFERENCES MUSICA(id_musica),
-    ordem        INT NOT NULL,         ← atributo do relacionamento
+    id_playlist  INTEGER REFERENCES PLAYLIST(id_playlist),
+    id_musica    INTEGER REFERENCES MUSICA(id_musica),
+    ordem        INTEGER   NOT NULL,    ← pertence ao RELACIONAMENTO (par único)
     data_adicao  TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY (id_playlist, id_musica)
 );
 
-Justificativa: ordem pertence à COMBINAÇÃO (playlist, música), não a cada um isolado.
-A mesma música pode ser a faixa 1 de uma playlist e faixa 7 de outra.
+← "ordem" pertence ao par (playlist, música), não a cada um isolado
+← mesma música pode ser faixa 1 numa playlist e faixa 7 em outra
 ```
 
-#### Regra 7 — Relacionamento Recursivo N:M
-
-> Para auto-relacionamento `N:M` em `E` com papéis `papel₁` e `papel₂`:  
-> Criar tabela associativa com **dois FKs para a mesma tabela**, nomeados pelos papéis.  
-> Adicionar `CHECK (pk_papel₁ ≠ pk_papel₂)` para evitar auto-referência.
-
 ```
-DER: ARTISTA ─── membro de ─── ARTISTA  [recursivo N:M]
-     Papéis: banda / membro
-     Atributos: data_entrada, data_saida
+─── Regra 7: Relacionamento Recursivo N:M → FK Duplo para Mesma Tabela ───
 
-SQL:
+DER: ARTISTA ──membro de── ARTISTA  [N:M recursivo]
+     papéis: banda / membro
+     atributos: data_entrada, data_saida
+
 CREATE TABLE ARTISTA_MEMBRO (
-    id_banda     INT REFERENCES ARTISTA(id_artista),  ← papel: banda
-    id_membro    INT REFERENCES ARTISTA(id_artista),  ← papel: membro
-    data_entrada DATE NOT NULL,
-    data_saida   DATE,                                ← NULL = ainda na banda
+    id_banda     INTEGER REFERENCES ARTISTA(id_artista),  ← papel: banda
+    id_membro    INTEGER REFERENCES ARTISTA(id_artista),  ← papel: membro
+    data_entrada DATE    NOT NULL,
+    data_saida   DATE,                     ← NULL = ainda na banda
     PRIMARY KEY (id_banda, id_membro),
-    CHECK (id_banda <> id_membro)                     ← artista não é membro de si mesmo
+    CHECK (id_banda <> id_membro)          ← artista não pode ser membro de si mesmo
 );
+
+← duas FKs apontando para a MESMA tabela ARTISTA
+← papéis distintos: id_banda é quem "contém"; id_membro é quem "pertence"
+← Queen (id_banda=8) ← Freddie Mercury (id_membro=9), Brian May (id_membro=10)...
 ```
 
-### 8.3 Tabela-Resumo do Mapeamento Spotify
+**Tabela-resumo do mapeamento Spotify:**
 
-| Elemento do DER | Regra | Resultado | Tabelas geradas |
-|---|---|---|---|
-| 7 entidades simples | R1 | Tabelas diretas | USUARIO, ARTISTA, MUSICA, ALBUM, PLAYLIST, ASSINATURA, (REPRODUCAO) |
-| `{redes_sociais}`, `{generos}` | R2 | Tabelas multivalorado | REDES_SOCIAIS, GENERO_MUSICA |
-| 5 derivados | R3 | VIEWs | — (sem colunas) |
-| *cria*, *possui*, *gera*, *de* | R4 | FKs em tabelas existentes | — (sem novas tabelas) |
-| REPRODUCAO (fraca) | R5 | Tabela com 2 FKs NOT NULL + CASCADE | REPRODUCAO |
-| 8 N:M diretos | R6 | Tabelas associativas | UCM, USA, UCP, PM, MA_pl, MA_al, AA, MA_ar |
-| *segue usr*, *membro* | R7 | Tabelas com FK duplo | USU, ARTISTA_MEMBRO |
-| **Total** | — | — | **18 tabelas** |
+| Elemento do DER | Regra | Resultado |
+|---|---|---|
+| 7 entidades simples | R1 | 7 tabelas diretas |
+| `{redes_sociais}`, `{generos}` | R2 | REDES_SOCIAIS, GENERO_MUSICA |
+| 5 atributos derivados | R3 | Nenhuma coluna — VIEWs |
+| *cria*, *possui*, *gera*, *de* | R4 | FKs em PLAYLIST, ASSINATURA, REPRODUCAO |
+| REPRODUCAO (entidade fraca) | R5 | 2 FKs NOT NULL com CASCADE/RESTRICT |
+| 8 relacionamentos N:M | R6 | 8 tabelas associativas |
+| *segue usuário*, *membro de* | R7 | 2 tabelas com FK duplo para mesma tabela |
+| **Total** | — | **18 tabelas** |
 
 ---
 
-## 9. Estratégias para Design de Esquema e Normalização
+## 9. Estratégias de Design e Normalização
 
-### 9.1 Fundamentação Teórica
+### 🔷 Definição Formal
 
-> **Definição 9.1 — Qualidade de Esquema:**  
-> Um esquema relacional `S = {R₁, ..., Rₖ}` é considerado de **boa qualidade** se satisfaz:  
-> 1. Cada relação representa **uma única entidade ou relacionamento** (semântica clara)  
-> 2. Minimiza **redundância** (evita anomalias)  
-> 3. Garante **sem perda** (lossless join) em decomposições  
+> **Def. 9.1 — Esquema de Boa Qualidade:** `S = {R₁,...,Rₖ}` tem boa qualidade se:  
+> 1. Cada relação representa **uma entidade ou relacionamento** (semântica clara)  
+> 2. Minimiza **redundância**  
+> 3. Garante **lossless join** em decomposições  
 > 4. **Preserva dependências** funcionais
 
-> **Definição 9.2 — Decomposição:**  
-> Uma decomposição de `R` é um conjunto `{R₁, R₂, ..., Rₖ}` tal que `R₁ ∪ R₂ ∪ ... ∪ Rₖ = R`.
+> **Teorema 9.1 — Condição de Lossless Join:**  
+> Decomposição `{R₁, R₂}` é sem perda ⟺ `(R₁ ∩ R₂) → R₁ ∈ F⁺` ou `(R₁ ∩ R₂) → R₂ ∈ F⁺`.
 
-> **Teorema 9.1 — Preservação de Informação:**  
-> Uma decomposição `{R₁, R₂}` é sem perda se e somente se:  
-> `(R₁ ∩ R₂) → R₁ ∈ F⁺`  **ou**  `(R₁ ∩ R₂) → R₂ ∈ F⁺`  
-> (A interseção dos esquemas é chave de ao menos um deles.)
+> **Teorema 9.2 — 3FN sempre atingível:**  
+> O algoritmo de síntese 3FN sempre produz decomposição que: (a) está em 3FN, (b) é lossless, (c) preserva todas as DFs.
 
-> **Teorema 9.2 — 3FN sempre decomponível com preservação:**  
-> O algoritmo de síntese de 3FN sempre produz uma decomposição que:  
-> (a) está em 3FN,  
-> (b) é sem perda,  
-> (c) preserva todas as dependências funcionais.
+> **Teorema 9.3 — BCNF pode perder DFs:**  
+> Existem esquemas onde a decomposição em BCNF não preserva todas as DFs.  
+> Nesses casos, aceitar 3FN é o compromisso correto.
 
-> **Teorema 9.3 — BCNF pode não preservar DFs:**  
-> Existem esquemas para os quais a decomposição em BCNF não preserva todas as dependências funcionais. Nestes casos, deve-se aceitar 3FN como compromisso.
-
-### 9.2 As Três Estratégias
-
-#### Top-Down (ER → Relacional)
-
+**Algoritmo de Síntese 3FN** (usa Fc como entrada):
 ```
-Base teórica: parte de um modelo conceitual semântico rico (ER/EER) e
-aplica as 7 regras de mapeamento para obter o esquema relacional.
-
-Garantias teóricas:
-  - Mapeamento sem perda (por construção)
-  - Preservação de dependências (por construção)
-  - Frequentemente resulta em 3FN ou BCNF diretamente
-
-Processo no Spotify:
-  Fase 1 — Requisitos:
-    "usuários ouvem músicas, criam playlists, seguem artistas e outros usuários"
-  
-  Fase 2 — Entidades:
-    USUARIO, ARTISTA, MUSICA, ALBUM, PLAYLIST
-  
-  Fase 3 — Refinamentos:
-    ASSINATURA separada de USUARIO (histórico de planos)
-    REPRODUCAO como entidade fraca (rastrear cada play)
-    REDES_SOCIAIS como multivalorado de ARTISTA
-  
-  Fase 4 — Relacionamentos:
-    N:M: MUSICA↔ARTISTA (colaborações), PLAYLIST↔MUSICA (ordem),
-         USUARIO↔USUARIO (follows recursivo), ARTISTA↔ARTISTA (bandas)
-  
-  Fase 5 — Mapeamento pelas 7 regras → 18 tabelas
+1. Calcular Fc = cobertura canônica de F
+2. Para cada X → A em Fc:
+     Criar Rᵢ com atributos X ∪ {A},  chave = X
+3. Se nenhum Rᵢ contém uma chave candidata de R:
+     Adicionar relação com uma chave candidata
+4. Eliminar relações Rᵢ ⊆ Rⱼ (redundantes)
 ```
 
-#### Bottom-Up (Síntese por DFs)
+---
+
+### 💡 Intuição
+
+Há três formas de abordar o design de um esquema — elas não são excludentes e costumam ser usadas juntas:
+
+| Estratégia | Ponto de partida | Melhor para |
+|---|---|---|
+| **Top-Down** | Requisitos → DER → tabelas | Sistemas novos com visão completa |
+| **Bottom-Up** | Atributos + DFs → síntese | Sistemas com muitos dados legados |
+| **Inside-Out** | Núcleo do negócio → expande | Equipes de produto ágeis |
+
+Independente da estratégia, o esquema deve ser **validado pelas formas normais** ao final.
+
+---
+
+### 🎵 Aplicação no Spotify
 
 ```
-Base teórica: parte dos atributos e DFs e aplica o Algoritmo de Síntese 3FN.
+─── Top-Down: do requisito à tabela ───
 
-Algoritmo de Síntese 3FN:
-  1. Seja U = conjunto de todos os atributos
-  2. Calcular Fc = cobertura canônica de F
-  3. Para cada X → A em Fc:
-       Criar Rᵢ = X ∪ {A}  com chave X
-  4. Se ∄ Rᵢ contendo alguma chave candidata de U:
-       Adicionar relação com uma chave candidata
-  5. Eliminar Rᵢ ⊆ Rⱼ (redundantes)
+Requisito: "usuários ouvem músicas, criam playlists, seguem artistas"
 
-Aplicação no Spotify (parcial):
-  U = {id_musica, titulo, duracao_seg, id_artista, nome_artista, pais_artista, ...}
+Etapa 1 — Entidades centrais:
+  USUARIO, MUSICA, ARTISTA, PLAYLIST
 
-  DFs F:
-    id_musica → titulo, duracao_seg, letra
-    id_artista → nome_artista, pais_artista, biografia
-    (id_musica, id_artista) → papel
+Etapa 2 — Refinamentos:
+  ALBUM separado de MUSICA (álbum ≠ faixa)
+  ASSINATURA separada de USUARIO (histórico de planos)
+  REPRODUCAO como entidade fraca (rastrear cada play individualmente)
 
-  Fc = { id_musica → titulo,
-          id_musica → duracao_seg,
-          id_musica → letra,
-          id_artista → nome_artista,
-          id_artista → pais_artista,
-          id_artista → biografia,
-          (id_musica, id_artista) → papel }
+Etapa 3 — Relacionamentos:
+  N:M entre MUSICA e ARTISTA (colaborações — uma música tem vários autores)
+  N:M entre PLAYLIST e MUSICA (ordem importa → atributo do relacionamento)
+  N:M recursivo USUARIO↔USUARIO (follows)
+  N:M recursivo ARTISTA↔ARTISTA (bandas com membros)
 
-  Síntese:
-    R₁(id_musica, titulo, duracao_seg, letra)         ← chave: id_musica
-    R₂(id_artista, nome_artista, pais_artista, bio)   ← chave: id_artista
-    R₃(id_musica, id_artista, papel)                  ← chave: (id_musica, id_artista)
-  
-  = MUSICA, ARTISTA, MUSICA_ARTISTA ✅
+Etapa 4 — Mapeamento pelas 7 regras → 18 tabelas
 ```
 
-#### Inside-Out
+```
+─── Bottom-Up: dos atributos à tabela via DFs ───
+
+Passo 1 — Todos os atributos do sistema:
+  U = {id_musica, titulo, duracao_seg, id_artista, nome_artista,
+       pais_artista, id_album, titulo_album, data_lancamento, ...}
+
+Passo 2 — DFs identificadas:
+  id_musica  → titulo, duracao_seg, letra
+  id_artista → nome_artista, pais_artista, biografia
+  id_album   → titulo_album, data_lancamento, tipo
+  (id_musica, id_artista) → papel    ← atributo do relacionamento
+
+Passo 3 — Cobertura canônica Fc (cada DF já atômica):
+  Fc = { id_musica→titulo,  id_musica→duracao_seg,  id_musica→letra,
+          id_artista→nome_artista,  id_artista→pais_artista, ...
+          (id_musica,id_artista)→papel }
+
+Passo 4 — Síntese 3FN (uma tabela por grupo de DFs com mesma chave):
+  {id_musica}        → MUSICA(id_musica, titulo, duracao_seg, letra)
+  {id_artista}       → ARTISTA(id_artista, nome_artista, pais_artista, ...)
+  {id_musica,id_artista} → MUSICA_ARTISTA(id_musica, id_artista, papel)
+
+← resultado: MUSICA, ARTISTA, MUSICA_ARTISTA — exatamente o esperado ✅
+```
 
 ```
-Estratégia empírica: parte do núcleo de negócio e expande.
+─── Inside-Out: do núcleo para a periferia ───
 
-Não tem teorema associado — é uma heurística de engenharia de software.
-Vantagem: alinha modelagem com prioridades de produto.
-
-No Spotify:
-  Nível 0 (núcleo):  MUSICA
-  Nível 1:           ALBUM, ARTISTA (produtores e contêineres)
-  Nível 2:           MUSICA_ARTISTA, MUSICA_ALBUM (relacionamentos centrais)
-  Nível 3:           USUARIO, PLAYLIST (consumidores)
-  Nível 4:           REPRODUCAO, ASSINATURA, USUARIO_CURTE_MUSICA
-  Nível 5:           REDES_SOCIAIS, GENERO_MUSICA, tabelas recursivas
+Nível 0 — Núcleo:       MUSICA  (razão de ser da plataforma)
+Nível 1 — Produção:     ALBUM, ARTISTA
+Nível 2 — Vínculos:     MUSICA_ARTISTA, MUSICA_ALBUM
+Nível 3 — Consumo:      USUARIO, PLAYLIST
+Nível 4 — Interação:    REPRODUCAO, ASSINATURA, USUARIO_CURTE_MUSICA
+Nível 5 — Metadados:    REDES_SOCIAIS, GENERO_MUSICA
+Nível 6 — Sociais:      USUARIO_SEGUE_USUARIO, ARTISTA_MEMBRO
 ```
 
-### 9.3 Quadro das Formas Normais com Testes Formais
+**Validação pelas Formas Normais — testes rápidos:**
 
 ```
-─── 1FN ───
-Teste: ∀ atributo A, ∀ tupla t: t[A] é atômico
-Violação no Spotify: {generos} em MUSICA como lista → resolvido com GENERO_MUSICA
-SQL: não usar arrays, JSON ou listas em colunas (sem suporte a normalização automática)
+─── Teste de 1FN ───
+Pergunta: há listas ou grupos repetidos em alguma coluna?
+  MUSICA.generos como "pop,rock" → ✗ viola 1FN → criar GENERO_MUSICA
 
-─── 2FN ───
-Pré-condição: relação tem PK composta
-Teste: ∄ atributo não-primo B, ∄ X ⊊ PK : X → B
-Violação exemplo: MUSICA_ALBUM(id_musica, id_album, titulo_musica, faixa_numero)
-  id_musica → titulo_musica (depende só de id_musica, não da PK composta toda)
-  → separar MUSICA: titulo_musica vai para MUSICA
+─── Teste de 2FN (só para PKs compostas) ───
+Pergunta: algum atributo não-primo depende de PARTE da PK composta?
 
-─── 3FN ───
-Teste: para toda X → B não-trivial: X é superchave OU B é primo
-Violação no Spotify:
-  ASSINATURA: tipo_plano → valor_pago
-  tipo_plano não é superchave; valor_pago não é primo
-  → criar PLANO(tipo_plano, valor_pago)
+  Hipótese ruim: PLAYLIST_MUSICA(id_playlist, id_musica, titulo_musica, ordem)
+    id_musica → titulo_musica ← depende de só id_musica, não do par
+    → viola 2FN → titulo_musica deve ficar em MUSICA
 
-─── BCNF ───
-Teste: para toda X → B não-trivial: X é superchave (ponto final)
-Mais restrita: elimina dependências envolvendo atributos primos também
-Violação clássica:
-  R(aluno, disciplina, professor) com:
-    professor → disciplina (professor leciona uma disciplina)
-    (aluno, disciplina) → professor (PK)
-  professor não é superchave → viola BCNF
-  Decompor: mas isso perde a DF (aluno, disciplina) → professor → aceitar 3FN
+  Modelo correto: PLAYLIST_MUSICA(id_playlist, id_musica, ordem, data_adicao)
+    (id_playlist,id_musica) → ordem       ✅ dependência total
+    (id_playlist,id_musica) → data_adicao ✅ dependência total
+
+─── Teste de 3FN ───
+Pergunta: algum atributo não-primo depende de não-superchave por transitividade?
+
+  ASSINATURA antes da normalização:
+    id_assinatura → tipo_plano → valor_pago
+    tipo_plano não é superchave; valor_pago não é primo → viola 3FN
+
+  Solução:
+    PLANO(tipo_plano PK, valor_pago)
+    ASSINATURA(id_assinatura PK, id_usuario FK, tipo_plano FK, data_inicio, data_fim)
+    ← cada tabela tem semântica de UMA entidade; transitividade eliminada ✅
+
+─── Teste de BCNF ───
+Pergunta: existe X → A não-trivial onde X NÃO é superchave?
+  (mais restrito que 3FN — inclui atributos primos)
+  No Spotify, após normalização: todas as tabelas satisfazem BCNF ✅
 ```
 
 ---
 
 ## 10. Integração de Esquemas
 
-### 10.1 Fundamentação Teórica
+### 🔷 Definição Formal
 
-> **Definição 10.1 — Problema de Integração:**  
-> Dados `n` esquemas locais `S₁, S₂, ..., Sₙ` (possivelmente desenvolvidos de forma independente), o problema de integração consiste em produzir um esquema global unificado `S_G` tal que:
-> 1. **Completude:** toda informação representável em algum `Sᵢ` é representável em `S_G`
-> 2. **Minimalidade:** `S_G` não contém redundâncias além das necessárias
-> 3. **Correção:** `S_G` é um esquema relacional válido e bem-formado
-> 4. **Compreensibilidade:** `S_G` pode ser mapeado de volta para cada `Sᵢ` (via VIEWs de compatibilidade)
+> **Def. 10.1 — Problema de Integração:** Dados `n` esquemas locais `S₁,...,Sₙ`, produzir esquema global `S_G` satisfazendo:  
+> 1. **Completude:** toda informação de algum `Sᵢ` é representável em `S_G`  
+> 2. **Minimalidade:** `S_G` não contém redundâncias desnecessárias  
+> 3. **Correção:** `S_G` é esquema relacional válido  
+> 4. **Compreensibilidade:** `S_G` mapeia de volta para cada `Sᵢ` via VIEWs
 
-> **Definição 10.2 — Conflito de Esquemas:**  
-> Um **conflito** entre esquemas `Sᵢ` e `Sⱼ` ocorre quando a mesma entidade/atributo do mundo real é representada de formas incompatíveis.
+> **Def. 10.2 — Conflitos de Esquema (Batini, Ceri & Navathe, 1992):**
 
-> **Classificação de conflitos (Batini, Ceri & Navathe, 1992):**
-
-| Tipo | Definição Formal | Exemplo Spotify |
+| Tipo | Formalização | Exemplo Spotify |
 |---|---|---|
-| **Nomenclatura** | `∃ conceito C : nome(C, Sᵢ) ≠ nome(C, Sⱼ)` | `faixa_id` vs `track_id` vs `id_musica` |
-| **Estrutural** | `∃ conceito C : estrutura(C, Sᵢ) ≠ estrutura(C, Sⱼ)` | Artista como atributo vs entidade |
-| **Tipo de dado** | `dom(A, Sᵢ) ≠ dom(A, Sⱼ)` | `duracao` como VARCHAR vs INTEGER |
-| **Restrição** | `restr(A, Sᵢ) ≠ restr(A, Sⱼ)` | `visibilidade` enum vs booleano |
-| **Semântico** | Mesmo nome, semântica diferente | `data` = data de criação vs data de lançamento |
+| **Nomenclatura** | `nome(C, Sᵢ) ≠ nome(C, Sⱼ)` | `faixa_id` vs `track_id` vs `id_musica` |
+| **Estrutural** | `estrutura(C, Sᵢ) ≠ estrutura(C, Sⱼ)` | Artista como atributo vs entidade |
+| **Tipo de dado** | `dom(A, Sᵢ) ≠ dom(A, Sⱼ)` | `duracao` VARCHAR vs INTEGER |
+| **Restrição** | `restr(A, Sᵢ) ≠ restr(A, Sⱼ)` | `visibilidade` enum vs boolean |
+| **Semântico** | Mesmo nome, sentido diferente | `data` = criação vs lançamento |
 
-### 10.2 Processo de Integração em 4 Etapas
+---
 
-#### Etapa 1 — Pré-integração: Análise e Classificação de Conflitos
+### 💡 Intuição
+
+Integração acontece quando o sistema foi construído por **múltiplas equipes independentes** — cada uma modelando as mesmas coisas de formas diferentes. Os problemas típicos são:
+
+- **Nomes diferentes, mesma coisa:** `faixa_id`, `track_id`, `id_musica` → todos são a PK de MUSICA
+- **Mesma coisa, estrutura diferente:** artista ora é atributo (`nome_artista`), ora é entidade (`ARTISTA`)
+- **Tipos incompatíveis:** duração como `"3:54"` (string) num módulo, como `234` (inteiro) em outro
+- **Chaves diferentes:** módulo B usa `email` como PK de usuário; módulo C usa `user_id`
+
+O processo segue 4 etapas: **analisar conflitos → corresponder entidades → resolver conflitos → gerar esquema global**.
+
+---
+
+### 🎵 Aplicação no Spotify
 
 ```
-Módulos independentes do Spotify:
+─── Cenário: 3 módulos desenvolvidos por times independentes ───
 
 Módulo A — Time Conteúdo:
-  FAIXA(faixa_id INTEGER, nome VARCHAR, duracao VARCHAR, artista_nome VARCHAR, artista_pais CHAR)
-  DISCO(disco_id INTEGER, titulo VARCHAR, ano INTEGER, tipo VARCHAR, artista_nome VARCHAR)
+  FAIXA(faixa_id, nome, duracao, artista_nome, artista_pais)
+  DISCO(disco_id, titulo, ano, tipo, artista_nome)
 
 Módulo B — Time Usuário:
-  CONTA(conta_id INTEGER, email VARCHAR UNIQUE, nome_completo VARCHAR,
-        nascimento DATE, pais_residencia CHAR)
-  LISTA(lista_id INTEGER, conta_id INTEGER FK, nome_lista VARCHAR, visibilidade VARCHAR)
-  FAIXA_LISTA(lista_id INTEGER FK, faixa_id INTEGER FK, posicao INTEGER)
+  CONTA(conta_id, email, nome_completo, nascimento, pais_residencia)
+  LISTA(lista_id, conta_id FK, nome_lista, visibilidade)  ← visibilidade: 'público'/'privado'
+  FAIXA_LISTA(lista_id FK, faixa_id FK, posicao)
 
 Módulo C — Time Analytics:
-  PLAY(play_id INTEGER, user_email VARCHAR, track_id INTEGER,
-       ts TIMESTAMP, device VARCHAR, secs_played INTEGER)
-  ARTISTA(artista_id INTEGER, artista_nome VARCHAR, pais CHAR, bio TEXT)
-
-─── Inventário de conflitos ───
-
-| Conflito | Tipo | Módulos | Descrição |
-|---|---|---|---|
-| faixa_id / track_id / id_musica | Nomenclatura | A, B, C | Mesmo conceito, 3 nomes |
-| artista_nome em FAIXA vs ARTISTA tabela | Estrutural | A, C | Atributo vs Entidade |
-| duracao VARCHAR vs INTEGER | Tipo | A, — | "3:54" vs 234 segundos |
-| visibilidade VARCHAR vs publica BOOLEAN | Restrição | B, — | 'público'/'privado' vs TRUE/FALSE |
-| user_email vs conta_id como identificador | Chave | B, C | email vs surrogate key |
-| data em FAIXA vs DISCO (qual lançamento?) | Semântico | A | Ambiguidade |
+  PLAY(play_id, user_email, track_id, ts, device, secs_played)
+  ARTISTA(artista_id, artista_nome, pais, bio)           ← entidade separada!
 ```
 
-#### Etapa 2 — Correspondência de Entidades (Entity Matching)
-
 ```
-Processo formal: para cada par de entidades (Eᵢ, Eⱼ) de módulos diferentes,
-verificar se representam o mesmo conceito do mundo real.
+─── Etapa 1: Inventário de conflitos ───
 
-Métrica de similaridade (simplificada):
-  sim(Eᵢ, Eⱼ) = w₁·sim_nome + w₂·sim_atributos + w₃·sim_semantica
-
-Correspondências encontradas:
-
-  Módulo A: FAIXA           ↔  Módulo C: PLAY.track_id    ↔  RESULTADO: MUSICA
-  Módulo A: DISCO           ↔  (sem correspondente)        ↔  RESULTADO: ALBUM (novo)
-  Módulo B: CONTA           ↔  Módulo C: PLAY.user_email   ↔  RESULTADO: USUARIO
-  Módulo B: LISTA           ↔  (sem conflito)              ↔  RESULTADO: PLAYLIST
-  Módulo C: ARTISTA         ↔  Módulo A: FAIXA.artista_nome ↔ RESULTADO: ARTISTA (entidade)
-  Módulo A: FAIXA.artista   ≅  Módulo C: ARTISTA           → fusão necessária
+┌─────────────────────────────────┬──────────────┬──────────────────────────────────────────┐
+│ Conflito                        │ Tipo         │ Descrição                                │
+├─────────────────────────────────┼──────────────┼──────────────────────────────────────────┤
+│ faixa_id / track_id / id_musica │ Nomenclatura │ 3 nomes para o mesmo conceito            │
+│ artista como atributo vs tabela │ Estrutural   │ Mód A: atributo; Mód C: entidade         │
+│ duracao VARCHAR vs INTEGER      │ Tipo         │ "3:54" vs 234 (segundos)                 │
+│ visibilidade vs publica boolean │ Restrição    │ enum vs TRUE/FALSE                       │
+│ email vs conta_id como PK       │ Chave        │ Mód B: email é PK; Mód C: user_email=FK  │
+└─────────────────────────────────┴──────────────┴──────────────────────────────────────────┘
 ```
 
-#### Etapa 3 — Resolução de Conflitos
+```
+─── Etapa 2: Correspondência de entidades ───
+
+  Módulo A: FAIXA     ↔  Módulo C: PLAY.track_id   →  MUSICA  (entidade unificada)
+  Módulo A: DISCO     ↔  (sem correspondente)       →  ALBUM   (novo nome padronizado)
+  Módulo B: CONTA     ↔  Módulo C: PLAY.user_email  →  USUARIO (chave: id_usuario gerado)
+  Módulo B: LISTA     ↔  (sem conflito)             →  PLAYLIST
+  Módulo C: ARTISTA   ↔  Módulo A: FAIXA.artista_nome → ARTISTA (entidade vence atributo)
+```
 
 ```
-─── Conflito de nomenclatura: faixa_id / track_id ───
-  Decisão: adotar id_musica (convenção snake_case + prefixo id_)
-  Mapeamento: faixa_id → id_musica, track_id → id_musica
+─── Etapa 3: Resolução de conflitos ───
 
-─── Conflito estrutural: artista como atributo (Módulo A) vs entidade (Módulo C) ───
-  FAIXA.artista_nome → promover para entidade ARTISTA (Módulo C vence)
-  Criar relacionamento N:M: MUSICA_ARTISTA(id_musica, id_artista, papel)
+─── Nomenclatura ───
+  faixa_id / track_id → id_musica  (convenção: id_ + nome da entidade)
+
+─── Estrutural: artista como atributo (Mód A) vs entidade (Mód C) ───
+  Decisão: entidade ARTISTA vence (mais expressivo)
+  FAIXA.artista_nome → removido; relacionamento N:M MUSICA_ARTISTA criado
   Justificativa: uma música pode ter múltiplos artistas (colaborações)
-    → atributo simples seria insuficiente
+                 → atributo simples seria insuficiente
 
-─── Conflito de tipo: duracao VARCHAR("3:54") → INTEGER ───
+─── Tipo: duracao VARCHAR("3:54") → INTEGER (segundos) ───
   Script de migração:
-    SELECT EXTRACT(MINUTE FROM duracao::TIME)*60
-         + EXTRACT(SECOND FROM duracao::TIME) AS duracao_seg
-  Decisão: INTEGER seconds (canônico, comparável, somável)
+    EXTRACT(MINUTE FROM duracao::TIME)*60
+    + EXTRACT(SECOND FROM duracao::TIME) AS duracao_seg
+  Decisão: INTEGER é comparável, somável, padrão de mercado
 
-─── Conflito de restrição: visibilidade VARCHAR → publica BOOLEAN ───
-  Mapeamento:
-    'público'   → TRUE
-    'privado'   → FALSE
-    'somente_eu'→ FALSE (com flag adicional colaborativa)
+─── Restrição: visibilidade VARCHAR → publica BOOLEAN ───
+  'público'    → TRUE
+  'privado'    → FALSE
+  'somente_eu' → FALSE  (com flag colaborativa separada para cobrir casos extras)
 
-─── Conflito de chave: email vs id como identificador de usuário ───
-  Decisão: criar surrogate key id_usuario INTEGER (PK) + email UNIQUE (alternada)
-  Compatibilidade: PLAY.user_email referencia via JOIN:
-    PLAY.user_email → JOIN USUARIO ON email = user_email → obter id_usuario
+─── Chave: email como PK (Mód B) vs surrogate key (Mód C) ───
+  Decisão: criar id_usuario INTEGER (PK surrogate) + email UNIQUE NOT NULL (chave alternada)
+  ← email pode mudar; surrogate key é estável para FKs
 ```
 
-#### Etapa 4 — Geração do Esquema Global e VIEWs de Compatibilidade
-
 ```
-Esquema global resultante da integração:
+─── Etapa 4: Esquema global e VIEWs de compatibilidade ───
 
-Do Módulo A: MUSICA(id_musica, titulo, duracao_seg, letra)
-             ALBUM(id_album, titulo, data_lancamento, capa_url, tipo)
-Do Módulo B: USUARIO(id_usuario, email, nome, data_nascimento, pais, plano)
-             PLAYLIST(id_playlist, id_usuario_criador, nome, descricao, publica, colaborativa)
-             PLAYLIST_MUSICA(id_playlist, id_musica, ordem, data_adicao)
-Do Módulo C: ARTISTA(id_artista, nome_artistico, pais_origem, biografia, tipo)
-             REPRODUCAO(id_reproducao, id_usuario, id_musica, data_hora, seg_ouvidos, dispositivo)
-Novos (integração):
-             MUSICA_ARTISTA(id_musica, id_artista, papel)
-             ALBUM_ARTISTA(id_album, id_artista, papel)
-             USUARIO_SEGUE_USUARIO(id_seguidor, id_seguido, data_inicio)
-
-─── VIEWs de compatibilidade para transição gradual ───
+Resultado da integração → mesmas 18 tabelas do modelo Spotify
 ```
 
 ```sql
--- VIEW que emula interface do Módulo A (FAIXA) após migração
+-- VIEW de compatibilidade para manter interface do Módulo A durante migração
 CREATE VIEW FAIXA AS
   SELECT
-    m.id_musica                          AS faixa_id,
-    m.titulo                             AS nome,
+    m.id_musica    AS faixa_id,
+    m.titulo       AS nome,
     TO_CHAR(INTERVAL '1 second' * m.duracao_seg, 'MI:SS') AS duracao,
-    MAX(a.nome_artistico)                AS artista_nome,
-    MAX(a.pais_origem)                   AS artista_pais
+    a.nome_artistico AS artista_nome,
+    a.pais_origem    AS artista_pais
   FROM MUSICA m
-  JOIN MUSICA_ARTISTA ma ON ma.id_musica = m.id_musica
-  JOIN ARTISTA a         ON a.id_artista = ma.id_artista
-  WHERE ma.papel = 'principal'
-  GROUP BY m.id_musica, m.titulo, m.duracao_seg;
+  JOIN MUSICA_ARTISTA ma ON ma.id_musica = m.id_musica AND ma.papel = 'principal'
+  JOIN ARTISTA a         ON a.id_artista = ma.id_artista;
 
--- VIEW que emula interface do Módulo C (PLAY) após migração
+-- VIEW de compatibilidade para o Módulo C (analytics)
 CREATE VIEW PLAY AS
   SELECT
     r.id_reproducao    AS play_id,
-    u.email            AS user_email,
+    u.email            AS user_email,  ← interface legada usa email como identificador
     r.id_musica        AS track_id,
     r.data_hora        AS ts,
     r.dispositivo      AS device,
@@ -1569,67 +1381,67 @@ CREATE VIEW PLAY AS
   FROM REPRODUCAO r
   JOIN USUARIO u ON u.id_usuario = r.id_usuario;
 
--- VIEW que emula CONTA do Módulo B
+-- VIEW de compatibilidade para o Módulo B (usuário)
 CREATE VIEW CONTA AS
   SELECT
-    id_usuario          AS conta_id,
+    id_usuario    AS conta_id,
     email,
-    nome                AS nome_completo,
-    data_nascimento     AS nascimento,
-    pais                AS pais_residencia
+    nome          AS nome_completo,
+    data_nascimento AS nascimento,
+    pais          AS pais_residencia
   FROM USUARIO;
 ```
 
-### 10.3 Boas Práticas Teóricas para Integração
+**Boas práticas para integração:**
 
-| Princípio | Base Teórica | Aplicação no Spotify |
+| Princípio | Por quê | Aplicação no Spotify |
 |---|---|---|
-| **Preferir entidades a atributos** | Evita dependências transitivas e parciais | `artista_nome` → entidade ARTISTA |
-| **Surrogate keys** | Desacopla identidade técnica de semântica | `id_usuario` em vez de `email` como PK |
-| **VIEWs de compatibilidade** | Preserva interfaces sem duplicar dados | PLAY, FAIXA, CONTA como views |
-| **Documentar decisões** | Rastreabilidade | Cada conflito resolvido registrado |
-| **Validar com dados reais** | Empirismo | Queries de reconciliação pré-migração |
-| **Normalizar após integrar** | Teoremas 9.1-9.3 | Verificar 3FN/BCNF no esquema global |
+| Entidade > atributo | Evita dep. parciais e transitivas | `artista_nome` → entidade ARTISTA |
+| Surrogate key como PK | Desacopla identidade técnica de semântica | `id_usuario` em vez de `email` como PK |
+| VIEWs de compatibilidade | Migração gradual sem quebrar sistemas | PLAY, FAIXA, CONTA como views temporárias |
+| Documentar cada decisão | Rastreabilidade e onboarding | Tabela de conflitos → decisões |
+| Validar com dados reais | Encontrar inconsistências antes da migração | Queries de reconciliação entre módulos |
+| Normalizar após integrar | Garantir qualidade do esquema global | Verificar 3FN/BCNF no esquema unificado |
 
 ---
 
-## Resumo Geral — Conexões entre os Tópicos
+## Mapa Conceitual — Como os Tópicos se Conectam
 
 ```
-Atributos e Domínios
-      ↓ definem
-Esquema de Relação (Modelo Relacional)
-      ↓ sobre o qual se definem
-Dependências Funcionais (DFs)
-      ↓ usadas para calcular
-Fechamento de Atributos (X⁺)
-      ↓ que permite verificar
-Chaves Candidatas (X⁺ = R e mínimo)
-      ↓ e verificar
-Equivalência de Conjuntos de DFs
-      ↓ leading to
-Cobertura Canônica (Fc mínimo equivalente)
-      ↓ que diagnostica
-Anomalias (via violações de 1FN/2FN/3FN/BCNF)
-      ↓ corrigidas por
-Normalização (decomposição sem perda + preservação)
-      ↓ guiada por
-Estratégias de Design (Top-down, Bottom-up, Inside-out)
-      ↓ aplicadas em
-Mapeamento ER → Relacional (7 regras)
-      ↓ e no contexto de múltiplas fontes por
-Integração de Esquemas (resolução de conflitos + VIEWs)
+Domínios e Atributos
+        ↓ estruturam
+Esquema de Relação  (Tópico 1)
+        ↓ sobre o qual se definem
+Dependências Funcionais  (Tópico 3)
+        ↓ usadas para calcular
+Fechamento de Atributos X⁺  (Tópico 4)
+        ↓ que permite identificar
+Chaves Candidatas e PKs  (Tópico 2)
+        ↓ e verificar
+Equivalência de Conjuntos de DFs  (Tópico 5)
+        ↓ que leva a
+Cobertura Canônica Fc  (Tópico 6)
+        ↓ que diagnostica
+Anomalias e Violações de FN  (Tópico 7)
+        ↓ corrigidas por normalização, guiada por
+Estratégias de Design (Top-down/Bottom-up/Inside-out)  (Tópico 9)
+        ↓ aplicadas via
+Mapeamento ER → Relacional (7 regras)  (Tópico 8)
+        ↓ e, em contextos multi-equipe, por
+Integração de Esquemas  (Tópico 10)
 ```
 
-| Tópico | Conceito Formal Central | Ferramenta Algorítmica | Garantia Teórica |
-|---|---|---|---|
-| Modelo Relacional | Relação como subconjunto do produto cartesiano | Verificação de domínios | Integridade de entidade e domínio |
-| Chaves | Superchave mínima; integridade referencial | Verificação de unicidade | `∀ t₁≠t₂: t₁[PK]≠t₂[PK]` |
-| DFs | `X → Y`: `t₁[X]=t₂[X] ⟹ t₁[Y]=t₂[Y]` | Axiomas de Armstrong | Sistema sólido e completo |
-| Fechamento | `X⁺ = {A | X→A ∈ F⁺}` | CLOSURE(X, F) | `X→Y ∈ F⁺ ⟺ Y ⊆ X⁺` |
-| Equivalência | `F⁺ = G⁺` | EQUIVALENTE(F, G) | Verificação bidirecional de cobertura |
-| Cob. Canônica | `Fc ≡ F`, mínimo, sem extrâneos | CANONICAL_COVER(F) | Entrada do algoritmo 3FN |
-| Anomalias | Violação de BCNF → anomalias | Teste de formas normais | BCNF ⟹ sem anomalias |
-| Mapeamento ER | 7 regras preservadoras | Sistemático | Sem perda + preserva DFs |
-| Estratégias | Síntese 3FN (bottom-up) | Algoritmo de síntese | Teorema 9.2 — 3FN sempre atingível |
-| Integração | Resolução de conflitos + VIEWs | Entity matching | Completude + minimalidade |
+**Tabela-resumo geral:**
+
+| Tópico | Conceito formal central | Para que serve na prática |
+|---|---|---|
+| **1. Modelo Relacional** | `r ⊆ dom(A₁)×...×dom(Aₙ)` | Fundamento: dados como conjuntos de tuplas atômicas |
+| **2. Chaves** | Superchave mínima; `∀t₁≠t₂: t₁[PK]≠t₂[PK]` | Identificar tuplas; garantir integridade referencial |
+| **3. DFs** | `t₁[X]=t₂[X] ⟹ t₁[Y]=t₂[Y]` | Expressar regras de negócio matematicamente |
+| **4. Fechamento** | `X⁺ = {A | X→A ∈ F⁺}` | Descobrir chaves e verificar DFs eficientemente |
+| **5. Equivalência** | `F⁺ = G⁺` | Substituir F por forma mais simples sem perda |
+| **6. Cob. Canônica** | `Fc ≡ F`, mínima, sem extrâneos | Entrada do algoritmo de síntese 3FN |
+| **7. Anomalias** | Violação de BCNF → anomalias | Diagnosticar problemas e motivar normalização |
+| **8. Mapeamento** | 7 regras preservadoras | Traduzir DER em tabelas relacionais |
+| **9. Estratégias** | Síntese 3FN (Teorema 9.2) | Garantir qualidade formal do esquema final |
+| **10. Integração** | Resolução de conflitos + VIEWs | Unificar esquemas de múltiplas equipes |
